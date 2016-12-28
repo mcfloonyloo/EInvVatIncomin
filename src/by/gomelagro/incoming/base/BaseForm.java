@@ -18,6 +18,7 @@ public class BaseForm {
 			}
 		}
 
+		@SuppressWarnings("unused")
 		private static  MainFrame main;
 		
 		public static void main(String[] args) {

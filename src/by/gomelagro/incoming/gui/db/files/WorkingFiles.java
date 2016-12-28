@@ -16,8 +16,7 @@ public class WorkingFiles {
 		if(line.trim() == "INVOICESH;Исходный СХ"){
 			reader.close();
 			return null;
-		}
-		System.out.println(line.trim());
+		}		
 		while(reader.ready()){
 			line = reader.readLine();
 			if(!line.trim().isEmpty())

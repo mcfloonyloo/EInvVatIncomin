@@ -32,6 +32,7 @@ import by.gomelagro.incoming.gui.db.WorkingIncomingTable;
 import by.gomelagro.incoming.gui.db.files.WorkingFiles;
 import by.gomelagro.incoming.gui.frames.models.IncomingTableModel;
 import by.gomelagro.incoming.gui.frames.table.renderer.IncomingTableHeaderRenderer;
+import by.gomelagro.incoming.gui.progress.LoadFileProgressBar;
 import by.gomelagro.incoming.properties.ApplicationProperties;
 import by.gomelagro.incoming.service.EVatServiceSingleton;
 
@@ -316,25 +317,31 @@ public class MainFrame {
 								int avialCount = 0;
 								int errorCount = 0;
 								int notavialCount = 0;
+								LoadFileProgressBar progress = new LoadFileProgressBar(lines.size()-1).activated();
 								for(int index=0; index<lines.size();index++){
 									String[] fields = lines.get(index).split(";");
-								//	JOptionPane.showMessageDialog(null, "Всего записей - "+fields[0],"Ошибка",JOptionPane.INFORMATION_MESSAGE);
-								switch(WorkingIncomingTable.getCountRecord(fields[8])){
-									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[8]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
-									case  0: if(WorkingIncomingTable.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
-									default: System.out.println("ЭСЧФ "+fields[8]+" в базе данных"); avialCount++; break;
+									switch(WorkingIncomingTable.getCountRecord(fields[8])){
+										case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[8]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
+										case  0: if(WorkingIncomingTable.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
+										default: avialCount++; break;
+									}
+									progress.setProgress(index);		
+									if(progress.isCancelled()){
+										JOptionPane.showMessageDialog(null, "Чтение файла отменено","Внимание",JOptionPane.WARNING_MESSAGE);
+										break;
 									}
 								}
 								JOptionPane.showMessageDialog(null, "Добавлено "+notavialCount+" ЭСЧФ"+System.lineSeparator()+
 									"Не добавлено из-за их наличия "+avialCount+" ЭСЧФ"+System.lineSeparator()+
 										"Не добавлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE); errorCount++;
+								progress.disactivated();
 							}else{
 								JOptionPane.showMessageDialog(null, "Загружен файл неверной структуры"+System.lineSeparator()+
 										"Выберите другой файл","Ошибка",JOptionPane.ERROR_MESSAGE);
 							}
 						}
 						return null;		
-					}					
+					}			
 				};	
 				worker.execute();
 			}
@@ -345,6 +352,20 @@ public class MainFrame {
 		listMenu.add(listSeparator);
 		
 		JMenuItem updateStatusMenuItem = new JMenuItem("Обновить статусы");
+		updateStatusMenuItem.addMouseListener(new MouseAdapter(){
+			@Override 
+			public void mousePressed(MouseEvent evt){
+				if(EVatServiceSingleton.getInstance().isAuthorized()){
+					if(EVatServiceSingleton.getInstance().isConnected()){
+						
+					}else{
+						JOptionPane.showMessageDialog(null, "Сервис не подключен","Ошибка",JOptionPane.ERROR_MESSAGE);
+					}
+				}else{
+					JOptionPane.showMessageDialog(null, "Авторизация не пройдена","Ошибка",JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		});
 		listMenu.add(updateStatusMenuItem);
 	}
 

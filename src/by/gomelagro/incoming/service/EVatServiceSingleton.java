@@ -30,6 +30,7 @@ public class EVatServiceSingleton {
 	private static volatile EVatServiceSingleton instance;
 	
 	private EVatService service = null;
+	@SuppressWarnings("unused")
 	private AvestProvider prov = null;
 	public EVatService getService(){return this.service;}
 	

@@ -10,8 +10,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
-import by.gomelagro.incoming.gui.console.JConsole.ConsoleOutputStream;
-
 /**
  * 
  * @author dok http://www.dokwork.ru/2011/08/jconsole.html
@@ -28,6 +26,7 @@ public class JConsole extends JTextPane {
 	
 	public class ConsoleOutputStream extends OutputStream {
 		
+		@SuppressWarnings("unused")
 		private PrintStream old;
 		private Color color;
 		public void setColor(Color color){this.color = color;}
