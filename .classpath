@@ -15,5 +15,13 @@
 	<classpathentry kind="lib" path="E:/eclipse/plugins/org.eclipse.ui.workbench_3.108.2.v20161025-2029.jar" sourcepath="E:/eclipse/plugins/org.eclipse.ui.workbench_3.108.2.v20161025-2029.jar"/>
 	<classpathentry kind="lib" path="E:/eclipse/plugins/com.ibm.icu_56.1.0.v201601250100.jar" sourcepath="E:/eclipse/plugins/com.ibm.icu_56.1.0.v201601250100.jar"/>
 	<classpathentry kind="lib" path="E:/eclipse/plugins/org.eclipse.ui.forms_3.7.0.v20160518-1929.jar" sourcepath="E:/eclipse/plugins/org.eclipse.ui.forms_3.7.0.v20160518-1929.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/avest">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="C:/Program Files/Avest/AvJCEProv/win32"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/sql"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/others"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/vat"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
