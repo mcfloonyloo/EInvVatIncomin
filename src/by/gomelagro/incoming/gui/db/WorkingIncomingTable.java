@@ -3,8 +3,13 @@ package by.gomelagro.incoming.gui.db;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JOptionPane;
+
+import by.gomelagro.incoming.status.Status;
 
 public class WorkingIncomingTable {
 	
@@ -62,6 +67,36 @@ public class WorkingIncomingTable {
 		} catch (SQLException e) {
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 			return false;
+		}
+	}
+	
+	public static List<String> selectNumbersInvoice(){
+		List<String> list = new ArrayList<String>();
+		String sql = "SELECT NUMBERINVOICE FROM INCOMING";
+		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
+			list.clear();
+			ResultSet set = statement.executeQuery(sql);
+			while(set.next()){
+				list.add(set.getString(1).trim());
+			}
+			return list;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			return null;			
+		}
+	}
+	
+	public static boolean updateStatus(String status, String number){
+		String sql = "UPDATE INCOMING SET STATUSINVOICEEN = ?, STATUSINVOICERU = ? WHERE NUMBERINVOICE = ?";
+		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+			statement.setString(1, Status.valueOf(status.trim()).getEnValue());
+			statement.setString(2, Status.valueOf(status.trim()).getRuValue());
+			statement.setString(3, number);
+			statement.executeUpdate();
+			return true;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			return false;			
 		}
 	}
 	

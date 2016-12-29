@@ -2,6 +2,7 @@ package by.gomelagro.incoming.base;
 
 import java.awt.EventQueue;
 
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
@@ -14,7 +15,7 @@ public class BaseForm {
 				javax.swing.UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 			} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
 					| UnsupportedLookAndFeelException e) {
-				System.err.println(e.getMessage());
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 			}
 		}
 
@@ -27,7 +28,7 @@ public class BaseForm {
 					try {					
 						main = new MainFrame();
 					} catch (Exception e) {
-						e.printStackTrace();
+						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 					}
 				}
 			});

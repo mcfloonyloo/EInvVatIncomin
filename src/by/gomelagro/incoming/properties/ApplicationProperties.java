@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import javax.swing.JOptionPane;
+
 /**
  * 
  * @author mcfloonyloo
@@ -79,7 +81,7 @@ public class ApplicationProperties {//паттерн Singleton
 				//showUploaded = Boolean.parseBoolean(prop.getProperty("showuploaded"));
 				
 			} catch (IOException e) {
-				e.printStackTrace();//
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 			}
 			
 		}
@@ -88,7 +90,7 @@ public class ApplicationProperties {//паттерн Singleton
 			try {
 				loadProperties();
 			} catch (FileNotFoundException e) {
-				System.err.println(e.getMessage());
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 			}
 			return new ApplicationProperties(this);
 		}

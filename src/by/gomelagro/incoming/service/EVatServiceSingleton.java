@@ -6,9 +6,12 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
 import by.gomelagro.incoming.properties.ApplicationProperties;
+import by.gomelagro.incoming.service.certificate.Certificate;
+import by.gomelagro.incoming.service.certificate.builder.CertificateBuilder;
 import by.gomelagro.incoming.service.selectors.KeySelector;
 
 import by.avest.certstore.AvCertStoreProvider;
@@ -110,18 +113,41 @@ public class EVatServiceSingleton {
 	}
 	
 	private void load(String url) throws ToolException{
-		try {
+		try{
 			if(this.service == null){
-				this.service = new EVatService(url, new KeySelector());
-				this.service.login();
-				setAutherization(true);
-				setConnect(false);
+				KeySelector key;
+				try {
+					key = new KeySelector();
+				} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | CertificateException
+						| IOException e) {
+					throw new ToolException("Ошибка: "+e.getLocalizedMessage());
+
+				}
+				try {
+					this.service = new EVatService(url, key);
+				} catch (CertificateException | KeyStoreException | IOException | AvDocException e) {
+					throw new ToolException("Ошибка: "+e.getLocalizedMessage());
+				}
+				try {
+					this.service.login();
+				} catch (AvDocException e) {
+					throw new ToolException("Ошибка: "+e.getLocalizedMessage());
+				}
+				if(key.isClosed()){
+					this.service.logout();
+					setAutherization(false);	
+					setConnect(false);
+				}else{
+					Certificate.getInstance().load(new CertificateBuilder(service).build());
+					setAutherization(true);	
+					setConnect(false);
+				}
+				
 			}else{
 				this.service = null;
 				load(url);
 			}
-		} catch ( Exception e) {
-			setAutherization(false);
+		}catch(IllegalArgumentException e){
 			throw new ToolException("Ошибка: "+e.getLocalizedMessage());
 		}
 	}

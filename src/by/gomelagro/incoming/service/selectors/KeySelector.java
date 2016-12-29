@@ -6,8 +6,14 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 
 import by.avest.edoc.client.PersonalKeyManager;
 import by.avest.edoc.tool.ToolException;
@@ -22,6 +28,10 @@ public class KeySelector extends PersonalKeyManager {
 	public KeySelector(KeyStore ks) {
 		super(ks);
 	}
+	
+	private boolean closed = false;
+	public boolean isClosed(){return this.closed;}
+	private void setClosed(boolean closed){this.closed = closed;}
 
 	public KeySelector() throws ToolException,UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException,
 	CertificateException, IOException {
@@ -39,12 +49,12 @@ public class KeySelector extends PersonalKeyManager {
 	@Override
 	public char[] promptPassword(String alias){
 		// command line interface could be replaced with GUI
-		String request = "Введите пароль для ключа \"" + alias + "\": ";
+		String request = alias;
 		char[] password = null;
 		try {
 			password = promptPasswordInternal(request);
 		} catch (ToolException e) {
-			System.err.println(e.getLocalizedMessage());
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 		}
 		return password;
 	}
@@ -53,6 +63,7 @@ public class KeySelector extends PersonalKeyManager {
 		char[] answer = promptForPassword(request);
 		// validate entered password
 		if(answer == null){
+			setClosed(true);
 			throw new ToolException("Авторизация пользователя отменена");
 		}
 		if ((answer.length >0) && (answer.length >= 8)) {
@@ -64,62 +75,71 @@ public class KeySelector extends PersonalKeyManager {
 	}
 
 	private char[] promptForPassword(String request) {
-		String line = JOptionPane.showInputDialog(null, request, "Ввод пароля", JOptionPane.NO_OPTION);
-		return line == null ? null : line.toCharArray();
+		JPanel panel = new JPanel();
+		JLabel label = new JLabel("Введите пароль:");
+		JPasswordField pass = new JPasswordField(65);
+		panel.add(label);
+		panel.add(pass);
+		String[] options = new String[]{"OK", "Cancel"};
+		char[] line = null;
+		int option = JOptionPane.showOptionDialog(null, panel, "Запрос пароля для ключа ["+request+"]",
+                JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,
+                null, options, options[0]);
+		if(option == 0) // pressing OK button
+		{
+		    line = pass.getPassword();
+		}		
+		return line;
 	}
 
 	@Override
 	public String chooseAlias(String[] aliases) throws IOException {
-		return aliases[promptAliasIndex(aliases)];
-	}
-
-	private int promptAliasIndex(String[] aliases) throws IOException {
-		int numberAlias = -1;
-		try {
-			numberAlias = Integer.parseInt(promptAliasIndexInternal(aliases)) - 1;
-		} catch (NumberFormatException | ToolException e) {
-			e.printStackTrace();
+		List<String> list = new ArrayList<String>();
+		for(int index=0;index<aliases.length;index++){
+			list.add(aliases[index]);
 		}
-		return numberAlias;
-	}
-	
-	public String getAliases(String[] aliases){
-		String lines = "Список ключей:\n";
-		for (int i = 0; i < aliases.length; i++) {
-			System.out.println((i + 1) + ": " + aliases[i]);
-			lines = lines + (i+1) + ": "+aliases[i]+"\n";
-		}
-		return lines;
-	}
-
-	private String promptAliasIndexInternal(String[] aliases) throws ToolException {
-		//BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
-		//String line = bufferedReader.readLine();
-		String line = JOptionPane.showInputDialog(null, getAliases(aliases) + "Введите номер ключа:", "Выбор ключа", JOptionPane.CANCEL_OPTION);
-		if (isAliasValid(line, aliases)) {
-			return line;
-		} else {
-			if(line == null){
-				throw new ToolException("Cancel");
+		
+		JPanel panel = new JPanel();
+		JLabel label = new JLabel("Введите пароль:");
+		JComboBox<Object> keyControl = new JComboBox<Object>(list.toArray());	
+		panel.add(label);
+		panel.add(keyControl);
+		String[] options = new String[]{"OK", "Cancel"};
+		int option = JOptionPane.showOptionDialog(null, panel, "Запрос ключа для авторизации в системе",
+                JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,
+                null, options, options[0]);
+		if(option == 0) // pressing OK button
+		{
+		    return aliases[keyControl.getSelectedIndex()];
+		}else{
+			try {
+				setClosed(true);
+				System.err.println("Ошибка: key is null");
+				throw new ToolException("Авторизация отменена");
+			} catch (ToolException e) { 
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+				return null;
 			}
-			if (line.isEmpty()) {
-				JOptionPane.showConfirmDialog(null, "Не выбран номер ключа. Введите номер ключа от 1 до " + aliases.length + ": ","Внимание", JOptionPane.WARNING_MESSAGE);
-
-			} else {
-				JOptionPane.showConfirmDialog(null, "Неверный номер \"" + (line) + "\". Повторно введите номер ключа от 1 до "
-						+ aliases.length + ": ","Внимание", JOptionPane.WARNING_MESSAGE);
+		}
+		
+		
+		/*
+		
+		JComboBox<Object> keyControl = new JComboBox<Object>(list.toArray());	
+		keyControl.setSelectedIndex(-1);
+		JOptionPane.showInputDialog(null, keyControl, "Запрос ключа для авторизации в системе",JOptionPane.QUESTION_MESSAGE);
+		int index = keyControl.getSelectedIndex();
+		if(index == -1){
+			try {
+				throw new ToolException("Авторизация отменена");
+			} catch (ToolException e) { 
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+				return null;
 			}
-			return promptAliasIndexInternal(aliases);
 		}
+		if ((index > -1) && (index < aliases.length)) {
+			return aliases[index];
+		}else
+			return null;*/
 	}
-
-	private boolean isAliasValid(String line, String[] aliases) {
-		try {
-			int index = Integer.parseInt(line);
-			return (index > 0) && (index <= aliases.length);
-		} catch (NumberFormatException e) {
-			return false;
-		}
-	}
-
 }

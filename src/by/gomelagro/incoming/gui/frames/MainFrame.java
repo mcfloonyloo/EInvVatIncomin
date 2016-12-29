@@ -8,7 +8,6 @@ import java.awt.Toolkit;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -26,6 +25,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingWorker;
 
+import by.avest.edoc.client.AvEStatus;
 import by.gomelagro.incoming.gui.console.JConsole;
 import by.gomelagro.incoming.gui.db.ConnectionDB;
 import by.gomelagro.incoming.gui.db.WorkingIncomingTable;
@@ -35,16 +35,20 @@ import by.gomelagro.incoming.gui.frames.table.renderer.IncomingTableHeaderRender
 import by.gomelagro.incoming.gui.progress.LoadFileProgressBar;
 import by.gomelagro.incoming.properties.ApplicationProperties;
 import by.gomelagro.incoming.service.EVatServiceSingleton;
+import by.gomelagro.incoming.service.certificate.Certificate;
 
 public class MainFrame {
 
 	private JFrame frame;
 	private JTextPane console;
 	private JMenuItem authMenuItem;
+	private JMenuItem infoCertMenuItem;
 	private JMenuItem connectMenuItem;
 	private JMenuItem disconnectMenuItem;
+	private JMenuItem loadFileMenuItem;
+	private JMenuItem updateStatusMenuItem;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.1";
+	private final String title = "Приложение для обработки входящих ЭСЧФ v0.2";
 	private static ApplicationProperties properties;
 	private JTable table;
 	
@@ -73,11 +77,9 @@ public class MainFrame {
 			authMenuItem.setEnabled(false);
 			connectMenuItem.setEnabled(true);
 			disconnectMenuItem.setEnabled(false);
-			try {
-				frame.setTitle(title+" ["+EVatServiceSingleton.getInstance().getService().getMyCertProperty("2.5.4.10")+"]");	
-			} catch (IOException e) {
-				System.err.println("Ошибка чтения параметра ключа: "+e.getLocalizedMessage());
-			}
+			infoCertMenuItem.setEnabled(true);
+			loadFileMenuItem.setEnabled(true);
+			frame.setTitle(title+" ["+ Certificate.getInstance().getOrgName().trim() +" " +Certificate.getInstance().getLastName().trim()+" "+Certificate.getInstance().getFirstMiddleName()+"]");
 		}
 	}
 	
@@ -90,6 +92,8 @@ public class MainFrame {
 				System.out.println("Подключение к сервису "+properties.getUrlService()+" выполнено успешно");
 				connectMenuItem.setEnabled(false);
 				disconnectMenuItem.setEnabled(true);
+				
+				updateStatusMenuItem.setEnabled(true);
 			}else{
 				System.err.println("Ошибка подключения к сервису "+properties.getUrlService());
 			}
@@ -104,11 +108,120 @@ public class MainFrame {
 					System.out.println("Отключение от сервиса "+properties.getUrlService()+" выполнено успешно");
 					connectMenuItem.setEnabled(true);
 					disconnectMenuItem.setEnabled(false);
+					
+					updateStatusMenuItem.setEnabled(false);
 				}else{
 					System.err.println("Ошибка отключения от сервиса "+properties.getUrlService());
 				}
 			}
 		}
+	}
+	
+	private void loadFile(){
+		if(EVatServiceSingleton.getInstance().isAuthorized()){
+			JFileChooser chooser = new JFileChooser();
+			int res = chooser.showDialog(null, "Открыть");
+			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
+				
+				@Override
+				protected Void doInBackground() throws Exception {
+					List<String> lines = null;
+					if(res == JFileChooser.APPROVE_OPTION){
+						try {
+							lines = WorkingFiles.readCSVFile(chooser.getSelectedFile());
+						} catch (IOException e) {
+							JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+						}
+						if(lines != null){
+							int avialCount = 0;
+							int errorCount = 0;
+							int notavialCount = 0;
+							LoadFileProgressBar progress = new LoadFileProgressBar(lines.size()).activated();
+							for(int index=0; index<lines.size();index++){
+								String[] fields = lines.get(index).split(";");
+								if(fields[0].trim().equals(Certificate.getInstance().getUnp2())){//изменить на чтение сертификата
+									JOptionPane.showMessageDialog(null, "Попытка чтения файла с исходящими ЭСЧФ","Внимание",JOptionPane.WARNING_MESSAGE);
+									break;
+								}
+								switch(WorkingIncomingTable.getCountRecord(fields[8])){
+								case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[8]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
+								case  0: if(WorkingIncomingTable.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
+								default: avialCount++; break;
+								}
+								progress.setProgress(index);		
+								if(progress.isCancelled()){
+									JOptionPane.showMessageDialog(null, "Чтение файла отменено","Внимание",JOptionPane.WARNING_MESSAGE);
+									break;
+								}
+							}
+							JOptionPane.showMessageDialog(null, "Добавлено "+notavialCount+" ЭСЧФ"+System.lineSeparator()+
+									"Не добавлено из-за их наличия "+avialCount+" ЭСЧФ"+System.lineSeparator()+
+									"Не добавлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);
+							progress.disactivated();
+						}else{
+							JOptionPane.showMessageDialog(null, "Загружен файл неверной структуры"+System.lineSeparator()+
+									"Выберите другой файл","Ошибка",JOptionPane.ERROR_MESSAGE);
+						}
+					}
+					return null;		
+				}			
+			};	
+			worker.execute();
+		}else{
+			JOptionPane.showMessageDialog(null, "Для обновления таблицы выставленных ЭСЧФ"+System.lineSeparator()+"необходима авторизация пользователя","Ошибка",JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	
+	private void updateStatus(){
+		if(EVatServiceSingleton.getInstance().isAuthorized()){
+			if(EVatServiceSingleton.getInstance().isConnected()){
+				SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
+
+					@Override
+					protected Void doInBackground() throws Exception {
+						List<String> list = WorkingIncomingTable.selectNumbersInvoice();
+						if(list != null){
+							int errorCount = 0;
+							int mainCount = 0;
+							LoadFileProgressBar progress = new LoadFileProgressBar(list.size()).activated();
+							for(int index=0;index<list.size();index++){
+								AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index));
+								boolean isValid = status.verify();
+								if(isValid){
+									if(WorkingIncomingTable.updateStatus(status.getStatus(), list.get(index))){
+										mainCount++;
+									}else{
+										errorCount++;
+									}
+								}
+								progress.setProgress(index);		
+								if(progress.isCancelled()){
+									JOptionPane.showMessageDialog(null, "Чтение файла отменено","Внимание",JOptionPane.WARNING_MESSAGE);
+									break;
+								}
+							}
+							JOptionPane.showMessageDialog(null, "Обновлены статусы у "+mainCount+" ЭСЧФ"+System.lineSeparator()+
+									"Не обновлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);
+							progress.disactivated();
+						}else{
+							JOptionPane.showMessageDialog(null, "Не загружен список ЭСЧФ для обновления статуса","Ошибка",JOptionPane.ERROR_MESSAGE);
+						}
+
+						return null;
+					}
+
+				};
+				worker.execute();
+			}else{
+				JOptionPane.showMessageDialog(null, "Сервис не подключен","Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+		}else{
+			JOptionPane.showMessageDialog(null, "Авторизация не пройдена","Ошибка",JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	
+	private void showInfoCertificate(){
+		new ShowCertificateFrame().open();
 	}
 	
 	/**
@@ -240,6 +353,17 @@ public class MainFrame {
 		authMenuItem.setEnabled(true);
 		fileMenu.add(authMenuItem);
 		
+		infoCertMenuItem = new JMenuItem("Информация о сертификате");
+		infoCertMenuItem.addMouseListener(new MouseAdapter(){
+			@Override
+			public void mousePressed(MouseEvent evt){
+				if(infoCertMenuItem.isEnabled())
+					showInfoCertificate();
+			}
+		});
+		infoCertMenuItem.setEnabled(false);
+		fileMenu.add(infoCertMenuItem);
+		
 		JSeparator separator = new JSeparator();
 		fileMenu.add(separator);
 		
@@ -296,104 +420,32 @@ public class MainFrame {
 		JMenu listMenu = new JMenu("Список ЭСЧФ");
 		menuBar.add(listMenu);
 		
-		JMenuItem loadFileMenuItem = new JMenuItem("Загрузить из файла...");
+		loadFileMenuItem = new JMenuItem("Загрузить из файла...");
 		loadFileMenuItem.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
-				JFileChooser chooser = new JFileChooser();
-				int res = chooser.showDialog(null, "Открыть");
-				SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
-
-					@Override
-					protected Void doInBackground() throws Exception {
-						List<String> lines = null;
-						if(res == JFileChooser.APPROVE_OPTION){
-							try {
-								lines = WorkingFiles.readCSVFile(chooser.getSelectedFile());
-							} catch (IOException e) {
-								JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-							}
-							if(lines != null){
-								int avialCount = 0;
-								int errorCount = 0;
-								int notavialCount = 0;
-								LoadFileProgressBar progress = new LoadFileProgressBar(lines.size()-1).activated();
-								for(int index=0; index<lines.size();index++){
-									String[] fields = lines.get(index).split(";");
-									switch(WorkingIncomingTable.getCountRecord(fields[8])){
-										case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[8]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
-										case  0: if(WorkingIncomingTable.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
-										default: avialCount++; break;
-									}
-									progress.setProgress(index);		
-									if(progress.isCancelled()){
-										JOptionPane.showMessageDialog(null, "Чтение файла отменено","Внимание",JOptionPane.WARNING_MESSAGE);
-										break;
-									}
-								}
-								JOptionPane.showMessageDialog(null, "Добавлено "+notavialCount+" ЭСЧФ"+System.lineSeparator()+
-									"Не добавлено из-за их наличия "+avialCount+" ЭСЧФ"+System.lineSeparator()+
-										"Не добавлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE); errorCount++;
-								progress.disactivated();
-							}else{
-								JOptionPane.showMessageDialog(null, "Загружен файл неверной структуры"+System.lineSeparator()+
-										"Выберите другой файл","Ошибка",JOptionPane.ERROR_MESSAGE);
-							}
-						}
-						return null;		
-					}			
-				};	
-				worker.execute();
+				if(loadFileMenuItem.isEnabled()){
+					loadFile();
+				}
 			}
 		});
+		loadFileMenuItem.setEnabled(false);
 		listMenu.add(loadFileMenuItem);
 		
 		JSeparator listSeparator = new JSeparator();
 		listMenu.add(listSeparator);
 		
-		JMenuItem updateStatusMenuItem = new JMenuItem("Обновить статусы");
+		updateStatusMenuItem = new JMenuItem("Обновить статусы");
 		updateStatusMenuItem.addMouseListener(new MouseAdapter(){
 			@Override 
 			public void mousePressed(MouseEvent evt){
-				if(EVatServiceSingleton.getInstance().isAuthorized()){
-					if(EVatServiceSingleton.getInstance().isConnected()){
-						
-					}else{
-						JOptionPane.showMessageDialog(null, "Сервис не подключен","Ошибка",JOptionPane.ERROR_MESSAGE);
-					}
-				}else{
-					JOptionPane.showMessageDialog(null, "Авторизация не пройдена","Ошибка",JOptionPane.ERROR_MESSAGE);
+				if(updateStatusMenuItem.isEnabled()){
+					updateStatus();
 				}
 			}
 		});
+		updateStatusMenuItem.setEnabled(false);
 		listMenu.add(updateStatusMenuItem);
 	}
 
-	public void insert(String name) {
-        String sql = "INSERT INTO TEST(NUMBERINVOICE) VALUES(?)";
- 
-        try(PreparedStatement pstmt = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
-            pstmt.setString(1, name);
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-    }
-	
-	public void update(String name, String id) {
-        String sql = "UPDATE TEST SET STATUS = ? "
-                
-                + "WHERE NUMBERINVOICE = ?";
- 
-        try (PreparedStatement pstmt = ConnectionDB.getInstance().getConnection().prepareStatement(sql)) {
- 
-            // set the corresponding param
-            pstmt.setString(1, name);            
-            pstmt.setString(2, id);
-            // update 
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-    }
 }
