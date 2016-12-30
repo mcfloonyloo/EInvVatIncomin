@@ -18,8 +18,7 @@ public class ApplicationProperties {//паттерн Singleton
 	
 	private String libraryPath; 	//путь к файлам dll папки Avest Java Provider
 	private String classPath;   	//путь к файлам .class проекта
-	private String inPath;  	//путь к папке с Ё—„‘
-	private String outPath;
+	private String filePath;		//путь к файлу выгрузки списка
 	private String dbPath;			//путь к базе данных
 	
 	private String urlService;		//сетевой путь к сервису Ё—„‘
@@ -28,8 +27,7 @@ public class ApplicationProperties {//паттерн Singleton
 	public String getLibraryPath(){return this.libraryPath;}
 	public String getClassPath(){return this.classPath;}
 	
-	public String getInPath(){return this.inPath;}
-	public String getOutPath(){return this.outPath;}
+	public String getFilePath(){return this.filePath;}
 	public String getDbPath(){return this.dbPath;}
 	
 	public String getUrlService(){return this.urlService;}
@@ -38,8 +36,7 @@ public class ApplicationProperties {//паттерн Singleton
 	private ApplicationProperties(Builder build){
 		this.libraryPath = build.libraryPath;
 		this.classPath = build.classPath;
-		this.inPath = build.inPath;
-		this.outPath = build.outPath;
+		this.filePath = build.filePath;
 		this.dbPath = build.dbPath;
 		
 		this.urlService = build.urlService;
@@ -51,8 +48,7 @@ public class ApplicationProperties {//паттерн Singleton
 		
 		private String libraryPath;
 		private String classPath;
-		private String inPath;
-		private String outPath;
+		private String filePath;
 		private String dbPath;
 		
 		private String urlService;
@@ -73,8 +69,7 @@ public class ApplicationProperties {//паттерн Singleton
 				
 				libraryPath = prop.getProperty("path.library");
 				classPath = prop.getProperty("path.class");				
-				inPath = prop.getProperty("path.in");
-				outPath = prop.getProperty("path.out");
+				filePath = prop.getProperty("path.file");
 				dbPath = prop.getProperty("path.db");
 				
 				urlService = prop.getProperty("url.service");

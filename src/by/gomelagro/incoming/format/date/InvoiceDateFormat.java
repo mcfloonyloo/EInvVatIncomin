@@ -7,26 +7,45 @@ import java.util.TimeZone;
 
 public class InvoiceDateFormat {
 
-	private static final SimpleDateFormat sdf;
-	private static final SimpleDateFormat strdf;
+	private static final SimpleDateFormat sdfFull;
+	private static final SimpleDateFormat sdfSmallDot;
+	private static final SimpleDateFormat sdfSmallDash;
 	
 	static {
-		sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-		sdf.setTimeZone(TimeZone.getTimeZone("Europe/Minsk"));
+		sdfFull = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+		sdfFull.setTimeZone(TimeZone.getTimeZone("Europe/Minsk"));
 		
-		strdf = new SimpleDateFormat("dd.MM.yyyy");
-		strdf.setTimeZone(TimeZone.getTimeZone("Europe/Minsk"));
+		sdfSmallDot = new SimpleDateFormat("dd.MM.yyyy");
+		sdfSmallDot.setTimeZone(TimeZone.getTimeZone("Europe/Minsk"));
+		
+		sdfSmallDash = new SimpleDateFormat("dd-MM-yyyy");
+		sdfSmallDash.setTimeZone(TimeZone.getTimeZone("Europe/Minsk"));
 	}
 	
-	public static Date string2Date(String date) throws ParseException {
-		return sdf.parse(date);
-	}
-
-	public static String string2String(String date) throws ParseException{ 
-		return sdf.format(strdf.parse(date));
+	public static Date string2DateFull(String date) throws ParseException{
+		return sdfFull.parse(date);
 	}
 	
-	public static String date2String(Date date) {
-		return sdf.format(date);
+	public static Date string2DateSmallDot(String date) throws ParseException{
+		return sdfSmallDot.parse(date);
 	}
+		
+	public static Date string2DateSmallDash(String date) throws ParseException{
+		return sdfSmallDash.parse(date);
+	}
+	
+	
+	
+	public static String dateFull2String(Date date) throws ParseException{
+		return sdfFull.format(date);
+	}
+	
+	public static String dateSmallDot2String(Date date) throws ParseException{
+		return sdfSmallDot.format(date);
+	}
+	
+	public static String dateSmallDash2String(Date date) throws ParseException{
+		return sdfSmallDash.format(date);
+	}
+	
 }

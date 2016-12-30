@@ -7,6 +7,7 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
@@ -30,6 +31,7 @@ import by.gomelagro.incoming.gui.console.JConsole;
 import by.gomelagro.incoming.gui.db.ConnectionDB;
 import by.gomelagro.incoming.gui.db.WorkingIncomingTable;
 import by.gomelagro.incoming.gui.db.files.WorkingFiles;
+import by.gomelagro.incoming.gui.db.files.data.UnloadedInvoice;
 import by.gomelagro.incoming.gui.frames.models.IncomingTableModel;
 import by.gomelagro.incoming.gui.frames.table.renderer.IncomingTableHeaderRenderer;
 import by.gomelagro.incoming.gui.progress.LoadFileProgressBar;
@@ -47,6 +49,8 @@ public class MainFrame {
 	private JMenuItem disconnectMenuItem;
 	private JMenuItem loadFileMenuItem;
 	private JMenuItem updateStatusMenuItem;
+	private JMenuItem fastUpdateStatusMenuItem;
+	private JMenuItem saveFileMenuItem;
 	
 	private final String title = "Приложение для обработки входящих ЭСЧФ v0.2";
 	private static ApplicationProperties properties;
@@ -94,6 +98,9 @@ public class MainFrame {
 				disconnectMenuItem.setEnabled(true);
 				
 				updateStatusMenuItem.setEnabled(true);
+				fastUpdateStatusMenuItem.setEnabled(true);
+				
+				//saveFileMenuItem.setEnabled(true);
 			}else{
 				System.err.println("Ошибка подключения к сервису "+properties.getUrlService());
 			}
@@ -110,6 +117,9 @@ public class MainFrame {
 					disconnectMenuItem.setEnabled(false);
 					
 					updateStatusMenuItem.setEnabled(false);
+					fastUpdateStatusMenuItem.setEnabled(false);
+					
+					//saveFileMenuItem.setEnabled(false);
 				}else{
 					System.err.println("Ошибка отключения от сервиса "+properties.getUrlService());
 				}
@@ -196,6 +206,54 @@ public class MainFrame {
 								}
 								progress.setProgress(index);		
 								if(progress.isCancelled()){
+									JOptionPane.showMessageDialog(null, "Обновление статусов отменено","Внимание",JOptionPane.WARNING_MESSAGE);
+									break;
+								}
+							}
+							JOptionPane.showMessageDialog(null, "Обновлены статусы у "+mainCount+" ЭСЧФ"+System.lineSeparator()+
+									"Не обновлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);
+							progress.disactivated();
+						}else{
+							JOptionPane.showMessageDialog(null, "Не загружен список ЭСЧФ для обновления статуса","Ошибка",JOptionPane.ERROR_MESSAGE);
+						}
+
+						return null;
+					}
+
+				};
+				worker.execute();
+			}else{
+				JOptionPane.showMessageDialog(null, "Сервис не подключен","Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+		}else{
+			JOptionPane.showMessageDialog(null, "Авторизация не пройдена","Ошибка",JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	
+	private void updateStatusFast(){
+		if(EVatServiceSingleton.getInstance().isAuthorized()){
+			if(EVatServiceSingleton.getInstance().isConnected()){
+				SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
+
+					@Override
+					protected Void doInBackground() throws Exception {
+						List<String> list = WorkingIncomingTable.selectNotSignedNumbersInvoice();
+						if(list != null){
+							int errorCount = 0;
+							int mainCount = 0;
+							LoadFileProgressBar progress = new LoadFileProgressBar(list.size()).activated();
+							for(int index=0;index<list.size();index++){
+								AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index));
+								boolean isValid = status.verify();
+								if(isValid){
+									if(WorkingIncomingTable.updateStatus(status.getStatus(), list.get(index))){
+										mainCount++;
+									}else{
+										errorCount++;
+									}
+								}
+								progress.setProgress(index);		
+								if(progress.isCancelled()){
 									JOptionPane.showMessageDialog(null, "Чтение файла отменено","Внимание",JOptionPane.WARNING_MESSAGE);
 									break;
 								}
@@ -222,6 +280,32 @@ public class MainFrame {
 	
 	private void showInfoCertificate(){
 		new ShowCertificateFrame().open();
+	}
+	
+	private void saveFileToTXT(){
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter(properties.getFilePath());
+			List<UnloadedInvoice> list = WorkingIncomingTable.selectSignedNumbersInvoice();
+			if(list != null){
+				for(UnloadedInvoice invoice : list){
+					writer.write(invoice.toString()+System.lineSeparator());
+				}
+				writer.flush();
+			}else{
+				JOptionPane.showMessageDialog(null, "Невозможно обработать неинициализированный список","Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+		} finally {
+			if(writer != null){
+				try{
+					writer.close();
+				}catch(IOException e){
+					JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		}
 	}
 	
 	/**
@@ -432,10 +516,10 @@ public class MainFrame {
 		loadFileMenuItem.setEnabled(false);
 		listMenu.add(loadFileMenuItem);
 		
-		JSeparator listSeparator = new JSeparator();
-		listMenu.add(listSeparator);
+		JSeparator upListSeparator = new JSeparator();
+		listMenu.add(upListSeparator);
 		
-		updateStatusMenuItem = new JMenuItem("Обновить статусы");
+		updateStatusMenuItem = new JMenuItem("Полное обновление статусов");
 		updateStatusMenuItem.addMouseListener(new MouseAdapter(){
 			@Override 
 			public void mousePressed(MouseEvent evt){
@@ -446,6 +530,33 @@ public class MainFrame {
 		});
 		updateStatusMenuItem.setEnabled(false);
 		listMenu.add(updateStatusMenuItem);
+		
+		fastUpdateStatusMenuItem = new JMenuItem("Быстрое обновление статусов");
+		fastUpdateStatusMenuItem.addMouseListener(new MouseAdapter(){
+			@Override 
+			public void mousePressed(MouseEvent evt){
+				if(fastUpdateStatusMenuItem.isEnabled()){
+					updateStatusFast();
+				}
+			}
+		});
+		fastUpdateStatusMenuItem.setEnabled(false);
+		listMenu.add(fastUpdateStatusMenuItem);
+		
+		JSeparator downListSeparator = new JSeparator();
+		listMenu.add(downListSeparator);
+		
+		saveFileMenuItem = new JMenuItem("Выгрузить список в TXT");
+		saveFileMenuItem.addMouseListener(new MouseAdapter(){
+			@Override 
+			public void mousePressed(MouseEvent evt){
+				if(saveFileMenuItem.isEnabled()){
+					saveFileToTXT();
+				}
+			}
+		});
+		//saveFileMenuItem.setEnabled(false);
+		listMenu.add(saveFileMenuItem);
 	}
 
 }

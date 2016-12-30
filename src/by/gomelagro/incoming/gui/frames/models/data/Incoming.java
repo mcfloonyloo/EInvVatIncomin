@@ -141,10 +141,11 @@ public class Incoming {
 			case 1: return this.getName();
 			case 2: return this.getNumInvoice();
 			case 3: return this.getStatusInvoiceRu();
-			case 4: return InvoiceDateFormat.string2String(this.getDateIssue());
-			case 5: return InvoiceDateFormat.string2String(this.getDateSignature());
+			case 4: return //InvoiceDateFormat.stringDateFull2StringDateSmall(this.getDateIssue());
+					InvoiceDateFormat.dateSmallDash2String(InvoiceDateFormat.string2DateFull(getDateIssue()));
+			case 5: return InvoiceDateFormat.dateSmallDash2String(InvoiceDateFormat.string2DateFull(this.getDateSignature()));
 			case 6: return this.getByInvoice();
-			case 7: return InvoiceDateFormat.string2String(this.getDateCancellation());
+			case 7: return InvoiceDateFormat.dateSmallDash2String(InvoiceDateFormat.string2DateFull(this.getDateCancellation()));
 			case 8: return this.getTotalVat();
 			case 9: return this.getTotalCost();
 			default: return null;
