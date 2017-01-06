@@ -39,9 +39,10 @@ import by.gomelagro.incoming.properties.ApplicationProperties;
 import by.gomelagro.incoming.service.EVatServiceSingleton;
 import by.gomelagro.incoming.service.certificate.Certificate;
 
-public class MainFrame {
+public class MainFrame extends JFrame{
 
-	private JFrame frame;
+	private static final long serialVersionUID = 1L;
+	//private JFrame frame;
 	private JTextPane console;
 	private JMenuItem authMenuItem;
 	private JMenuItem infoCertMenuItem;
@@ -52,15 +53,14 @@ public class MainFrame {
 	private JMenuItem fastUpdateStatusMenuItem;
 	private JMenuItem saveFileMenuItem;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.2";
-	private static ApplicationProperties properties;
+	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3";
 	private JTable table;
 	
 	static{
-		properties = ApplicationProperties.Builder.getInstance().build();
+		ApplicationProperties.getInstance();	
 		System.setProperty("by.avest.loader.shared","true");
-		System.setProperty("java.library.path",properties.getLibraryPath().trim());
-		System.setProperty("classpath", properties.getClassPath().trim());
+		System.setProperty("java.library.path",ApplicationProperties.getInstance().getLibraryPath().trim());
+		System.setProperty("classpath", ApplicationProperties.getInstance().getClassPath().trim());
 	}
 	
 	/**
@@ -68,14 +68,14 @@ public class MainFrame {
 	 */
 	public MainFrame() {
 		initialize();
-		frame.setVisible(true);
+		setVisible(true);
 	}
 
 	/**
 	 * Methods autherization and connection to service
 	 */
 	private void autherization(){
-		EVatServiceSingleton.getInstance().autherization(properties);
+		EVatServiceSingleton.getInstance().autherization(ApplicationProperties.getInstance());
 		if(EVatServiceSingleton.getInstance().isAuthorized()){
 			System.out.println("Авторизация пройдена");
 			authMenuItem.setEnabled(false);
@@ -83,7 +83,7 @@ public class MainFrame {
 			disconnectMenuItem.setEnabled(false);
 			infoCertMenuItem.setEnabled(true);
 			loadFileMenuItem.setEnabled(true);
-			frame.setTitle(title+" ["+ Certificate.getInstance().getOrgName().trim() +" " +Certificate.getInstance().getLastName().trim()+" "+Certificate.getInstance().getFirstMiddleName()+"]");
+			setTitle(title+" ["+ Certificate.getInstance().getOrgName().trim() +" " +Certificate.getInstance().getLastName().trim()+" "+Certificate.getInstance().getFirstMiddleName()+"]");
 		}
 	}
 	
@@ -93,7 +93,7 @@ public class MainFrame {
 			if(EVatServiceSingleton.getInstance().isConnected()){
 				console.setText("");
 				System.out.println("Авторизация пройдена");
-				System.out.println("Подключение к сервису "+properties.getUrlService()+" выполнено успешно");
+				System.out.println("Подключение к сервису "+ApplicationProperties.getInstance().getUrlService()+" выполнено успешно");
 				connectMenuItem.setEnabled(false);
 				disconnectMenuItem.setEnabled(true);
 				
@@ -102,7 +102,7 @@ public class MainFrame {
 				
 				//saveFileMenuItem.setEnabled(true);
 			}else{
-				System.err.println("Ошибка подключения к сервису "+properties.getUrlService());
+				System.err.println("Ошибка подключения к сервису "+ApplicationProperties.getInstance().getUrlService());
 			}
 		}
 	}
@@ -112,7 +112,7 @@ public class MainFrame {
 			if(EVatServiceSingleton.getInstance().isConnected()){
 				EVatServiceSingleton.getInstance().disconnect();
 				if(!EVatServiceSingleton.getInstance().isConnected()){
-					System.out.println("Отключение от сервиса "+properties.getUrlService()+" выполнено успешно");
+					System.out.println("Отключение от сервиса "+ApplicationProperties.getInstance().getUrlService()+" выполнено успешно");
 					connectMenuItem.setEnabled(true);
 					disconnectMenuItem.setEnabled(false);
 					
@@ -121,7 +121,7 @@ public class MainFrame {
 					
 					//saveFileMenuItem.setEnabled(false);
 				}else{
-					System.err.println("Ошибка отключения от сервиса "+properties.getUrlService());
+					System.err.println("Ошибка отключения от сервиса "+ApplicationProperties.getInstance().getUrlService());
 				}
 			}
 		}
@@ -285,7 +285,7 @@ public class MainFrame {
 	private void saveFileToTXT(){
 		FileWriter writer = null;
 		try {
-			writer = new FileWriter(properties.getFilePath());
+			writer = new FileWriter(ApplicationProperties.getInstance().getFilePath());
 			List<UnloadedInvoice> list = WorkingIncomingTable.selectSignedNumbersInvoice();
 			if(list != null){
 				for(UnloadedInvoice invoice : list){
@@ -311,26 +311,22 @@ public class MainFrame {
 	/**
 	 * Initialize the contents of the frame.
 	 */
-	private void initialize() {
+	private void initialize() {	
 		try {
-			ConnectionDB.getInstance().load(properties);
-		} catch (ClassNotFoundException e1) {
-			System.err.println(e1.getLocalizedMessage());
-		} catch (SQLException e1) {
-			System.err.println(e1.getLocalizedMessage());
+			ConnectionDB.getInstance().load();
+		} catch (ClassNotFoundException | SQLException e) {
+			JOptionPane.showMessageDialog(null,e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 		}
-		
-		frame = new JFrame();
-		frame.setTitle(title);
-		frame.setResizable(false);
-		frame.setBounds(100, 100, 1065, 630);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setTitle(title);
+		setResizable(false);
+		setBounds(100, 100, 1065, 630);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 0};
 		gridBagLayout.rowHeights = new int[]{400, 129, 0};
 		gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
 		gridBagLayout.rowWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
-		frame.getContentPane().setLayout(gridBagLayout);
+		getContentPane().setLayout(gridBagLayout);
 		
 		IncomingTableModel tableModel = new  IncomingTableModel();
 		table = new JTable(tableModel);
@@ -406,7 +402,7 @@ public class MainFrame {
 				.setTotalCost("000000.000")
 				.build();
 		tableModel.addRow(inc);*/
-		frame.getContentPane().add(scrollPane_table, gbc_table);
+		getContentPane().add(scrollPane_table, gbc_table);
 		
 		console = new JConsole();
 		console.setFont(new Font("Courier New", Font.PLAIN, 11));
@@ -418,10 +414,10 @@ public class MainFrame {
 		gbc_console.fill = GridBagConstraints.BOTH;
 		gbc_console.gridx = 0;
 		gbc_console.gridy = 1;
-		frame.getContentPane().add(scrollPane_console, gbc_console);
+		getContentPane().add(scrollPane_console, gbc_console);
 		
 		JMenuBar menuBar = new JMenuBar();
-		frame.setJMenuBar(menuBar);
+		setJMenuBar(menuBar);
 		
 		JMenu fileMenu = new JMenu("Файл");
 		menuBar.add(fileMenu);
@@ -478,6 +474,12 @@ public class MainFrame {
 		fileMenu.add(separatorUp);
 		
 		JMenuItem Settings = new JMenuItem("Настройки");
+		Settings.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				new SettingsFrame().open();
+			}
+		});
 		fileMenu.add(Settings);
 		
 		JSeparator separatorDown = new JSeparator();
@@ -555,7 +557,6 @@ public class MainFrame {
 				}
 			}
 		});
-		//saveFileMenuItem.setEnabled(false);
 		listMenu.add(saveFileMenuItem);
 	}
 
