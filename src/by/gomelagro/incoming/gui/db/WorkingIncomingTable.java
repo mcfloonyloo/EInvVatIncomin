@@ -1,11 +1,14 @@
 package by.gomelagro.incoming.gui.db;
 
+import java.awt.Color;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -13,6 +16,7 @@ import javax.swing.JOptionPane;
 
 import by.gomelagro.incoming.format.date.InvoiceDateFormat;
 import by.gomelagro.incoming.gui.db.files.data.UnloadedInvoice;
+import by.gomelagro.incoming.gui.frames.report.ResultFont;
 import by.gomelagro.incoming.status.Status;
 
 public class WorkingIncomingTable {
@@ -136,6 +140,47 @@ public class WorkingIncomingTable {
 		}
 	}
 		
+	public static List<UnloadedInvoice> selectSignedNumbersInvoiceAtDate(Date date, Comparator<UnloadedInvoice> comparator, String status){
+		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
+		String sql;
+		try {
+			sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATECOMMISSION = '"+InvoiceDateFormat.dateSmallDash2String(date)+"' "+status;
+		} catch (ParseException pe) {
+			JOptionPane.showMessageDialog(null, pe.getLocalizedMessage()+System.lineSeparator(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			return list;
+		}
+		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
+			list.clear();
+			ResultSet set = statement.executeQuery(sql);
+			String statusRu = "";
+			Color color = Color.BLACK;
+			while(set.next()){
+				if(set.getString("STATUSINVOICEEN").trim().equals("COMPLETED_SIGNED")){
+					statusRu = "Подписан";
+					color = ResultFont.getGreen();
+				}else{
+					statusRu = "Не подписан";
+					color = ResultFont.getRed();
+				}
+				list.add(new UnloadedInvoice.Builder()
+						.setUnp(set.getString("UNP").trim())
+						.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateSmallDash(set.getString("DATECOMMISSION").trim())))
+						.setNumberInvoice(set.getString("NUMBERINVOICE").trim())
+						.setStatusInvoiceRu(statusRu)
+						.setTotalCost(set.getString("TOTALCOST").trim())
+						.setTotalVat(set.getString("TOTALVAT").trim())
+						.setTotalAll(set.getString("TOTALALL").trim())
+						.setColor(color)
+						.build());
+			}
+			Collections.sort(list, comparator);
+			return list;
+		} catch (SQLException | ParseException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			return null;			
+		}
+	}
+	
 	public static List<UnloadedInvoice> selectSignedNumbersInvoice(Date date){
 		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
 		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){

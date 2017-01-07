@@ -7,7 +7,6 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
@@ -31,7 +30,6 @@ import by.gomelagro.incoming.gui.console.JConsole;
 import by.gomelagro.incoming.gui.db.ConnectionDB;
 import by.gomelagro.incoming.gui.db.WorkingIncomingTable;
 import by.gomelagro.incoming.gui.db.files.WorkingFiles;
-import by.gomelagro.incoming.gui.db.files.data.UnloadedInvoice;
 import by.gomelagro.incoming.gui.frames.models.IncomingTableModel;
 import by.gomelagro.incoming.gui.frames.table.renderer.IncomingTableHeaderRenderer;
 import by.gomelagro.incoming.gui.progress.LoadFileProgressBar;
@@ -282,32 +280,6 @@ public class MainFrame extends JFrame{
 		new ShowCertificateFrame().open();
 	}
 	
-	private void saveFileToTXT(){
-		FileWriter writer = null;
-		try {
-			writer = new FileWriter(ApplicationProperties.getInstance().getFilePath());
-			List<UnloadedInvoice> list = WorkingIncomingTable.selectSignedNumbersInvoice();
-			if(list != null){
-				for(UnloadedInvoice invoice : list){
-					writer.write(invoice.toString()+System.lineSeparator());
-				}
-				writer.flush();
-			}else{
-				JOptionPane.showMessageDialog(null, "Невозможно обработать неинициализированный список","Ошибка",JOptionPane.ERROR_MESSAGE);
-			}
-		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-		} finally {
-			if(writer != null){
-				try{
-					writer.close();
-				}catch(IOException e){
-					JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-				}
-			}
-		}
-	}
-	
 	/**
 	 * Initialize the contents of the frame.
 	 */
@@ -553,7 +525,7 @@ public class MainFrame extends JFrame{
 			@Override 
 			public void mousePressed(MouseEvent evt){
 				if(saveFileMenuItem.isEnabled()){
-					saveFileToTXT();
+					new ReportOneDayFrame().open();
 				}
 			}
 		});

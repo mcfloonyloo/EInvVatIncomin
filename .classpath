@@ -23,5 +23,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/sql"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/others"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/vat"/>
+	<classpathentry kind="lib" path="F:/projects/EInvVatIncoming/libraries/other/jcalendar-1.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
