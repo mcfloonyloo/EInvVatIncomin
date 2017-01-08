@@ -61,18 +61,34 @@ public class WorkingIncomingTable {
 			statement.setString(4,  fields[8]);
 			statement.setString(5,  fields[9]);
 			statement.setString(6,  fields[10]);
-			statement.setString(7,  fields[11]);
-			statement.setString(8,  fields[12]);
-			statement.setString(9,  fields[13]);
+			if(fields[11].trim().length() > 0){
+				statement.setString(7,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[11])));
+			}else{
+				statement.setString(7,  fields[11]);
+			}
+			if(fields[12].trim().length() > 0){
+				statement.setString(8,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[12])));
+			}else{
+				statement.setString(8,  fields[12]);
+			}
+			if(fields[13].trim().length() > 0){
+				statement.setString(9,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[13])));
+			}else{
+				statement.setString(9,  fields[13]);
+			}
 			statement.setString(10, fields[14]);
-			statement.setString(11, fields[15]);
+			if(fields[15].trim().length() > 0){
+				statement.setString(11,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[15])));
+			}else{
+				statement.setString(11,  fields[15]);
+			}
 			statement.setString(12, fields[16].replace(",", "."));
 			statement.setString(13, fields[17].replace(",", "."));
 			statement.setString(14, fields[18].replace(",", "."));
 			statement.setString(15, String.format("%.3f",(Float.parseFloat(fields[18].replace(",", "."))-Float.parseFloat(fields[17].replace(",", "."))-Float.parseFloat(fields[16].replace(",", ".")))));
 			statement.executeUpdate();
 			return true;
-		} catch (SQLException e) {
+		} catch (SQLException | ParseException e) {
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
@@ -143,12 +159,44 @@ public class WorkingIncomingTable {
 	public static List<UnloadedInvoice> selectSignedNumbersInvoiceAtDate(Date date, Comparator<UnloadedInvoice> comparator, String status){
 		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
 		String sql;
-		try {
-			sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATECOMMISSION = '"+InvoiceDateFormat.dateSmallDash2String(date)+"' "+status;
-		} catch (ParseException pe) {
-			JOptionPane.showMessageDialog(null, pe.getLocalizedMessage()+System.lineSeparator(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+		sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATECOMMISSION = '"+date.toString()+"' "+status;
+		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
+			list.clear();
+			ResultSet set = statement.executeQuery(sql);
+			String statusRu = "";
+			Color color = Color.BLACK;
+			while(set.next()){
+				if(set.getString("STATUSINVOICEEN").trim().equals("COMPLETED_SIGNED")){
+					statusRu = "Подписан";
+					color = ResultFont.getGreen();
+				}else{
+					statusRu = "Не подписан";
+					color = ResultFont.getRed();
+				}
+				list.add(new UnloadedInvoice.Builder()
+						.setUnp(set.getString("UNP").trim())
+						.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateSmallDash(set.getString("DATECOMMISSION").trim())))
+						.setNumberInvoice(set.getString("NUMBERINVOICE").trim())
+						.setStatusInvoiceRu(statusRu)
+						.setTotalCost(set.getString("TOTALCOST").trim())
+						.setTotalVat(set.getString("TOTALVAT").trim())
+						.setTotalAll(set.getString("TOTALALL").trim())
+						.setColor(color)
+						.build());
+			}
+			Collections.sort(list, comparator);
 			return list;
+		} catch (SQLException | ParseException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			return null;			
 		}
+	}
+	
+	public static List<UnloadedInvoice> selectSignedNumbersInvoiceAtBetween(Date leftDate, Date rightDate, Comparator<UnloadedInvoice> comparator, String status){
+		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
+		String sql;
+		sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATECOMMISSION BETWEEN '"+leftDate.toString()+"' AND '"+rightDate.toString()+"' "+status;
+		System.out.println(sql);
 		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 			list.clear();
 			ResultSet set = statement.executeQuery(sql);

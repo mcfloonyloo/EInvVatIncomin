@@ -1,9 +1,33 @@
 package by.gomelagro.incoming.gui.frames;
 
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Dialog.ModalExclusionType;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.Date;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.AbstractListModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
 
 import com.toedter.calendar.JDateChooser;
@@ -12,76 +36,46 @@ import by.gomelagro.incoming.format.date.InvoiceDateFormat;
 import by.gomelagro.incoming.gui.db.WorkingIncomingTable;
 import by.gomelagro.incoming.gui.db.files.data.UnloadedInvoice;
 import by.gomelagro.incoming.gui.db.files.data.UnloadedInvoiceComparators;
-import by.gomelagro.incoming.gui.frames.report.ResultStatusComboBoxItem;
 import by.gomelagro.incoming.gui.frames.report.ResultElementList;
 import by.gomelagro.incoming.gui.frames.report.ResultFont;
 import by.gomelagro.incoming.gui.frames.report.ResultSortComboBoxItem;
+import by.gomelagro.incoming.gui.frames.report.ResultStatusComboBoxItem;
 import by.gomelagro.incoming.gui.frames.report.models.ResultListModel;
 import by.gomelagro.incoming.gui.frames.report.models.renderer.ResultListCellRenderer;
 import by.gomelagro.incoming.properties.ApplicationProperties;
 
-import java.awt.Dialog.ModalExclusionType;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.awt.GridBagLayout;
-import javax.swing.JButton;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
-import javax.swing.ScrollPaneConstants;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.sql.Date;
-
-import javax.swing.JList;
-import java.awt.Font;
-import javax.swing.ListSelectionModel;
-import javax.swing.JMenuBar;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JLabel;
-import javax.swing.JComboBox;
-import javax.swing.AbstractListModel;
-
-/**
- * 
- * @author mcfloonyloo
- * @version 0.1
- *
- */
-
-public class ReportOneDayFrame extends JFrame {
+public class ReportBetweenFrame extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
-	private JDateChooser dateChooser;
+	private JDateChooser fromDateChooser;
 	private JList<ResultElementList> resultList;
 	private ResultListModel listModel;
 	private JMenuBar menuBar;
 	private JMenu fileMenu;
 	private JMenuItem saveMenuItem;
 	private JMenuItem saveAsMenuItem;
-	private JLabel onDateLabel;
+	private JLabel fromDateLabel;
 	private JLabel generatedReportLabel;
 	private JLabel statusLabel;
 	private JLabel sortedLabel;
 	private JComboBox<ResultStatusComboBoxItem> statusComboBox;
 	private JComboBox<ResultSortComboBoxItem> sortedComboBox;
 	private JList<String> titleList;
+	private JDateChooser toDateChooser;
+	private JLabel toLabel;
 
 	/**
 	 * Create the frame.
 	 */
-	public ReportOneDayFrame() {
+	public ReportBetweenFrame() {
 		initialize();
 	}
-
-	private void initialize(){		
+	
+	private void initialize(){
 		setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
 		setType(Type.UTILITY);
-		setTitle("Отчет по ЭСЧФ за один день");
+		setTitle("Отчет по ЭСЧФ за период");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setResizable(false);
 		setBounds(100, 100, 800, 520);
@@ -127,57 +121,76 @@ public class ReportOneDayFrame extends JFrame {
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		GridBagLayout gbl_contentPane = new GridBagLayout();
-		gbl_contentPane.columnWidths = new int[]{20, 48, 0, 120, 112, 0, 20, 0};
+		gbl_contentPane.columnWidths = new int[]{20, 48, 0, 120, 0, 120, 0, 0, 20, 0};
 		gbl_contentPane.rowHeights = new int[]{12, 24, 0, 0, 0, 20, 0, 20, 0};
-		gbl_contentPane.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
+		gbl_contentPane.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
 		gbl_contentPane.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
 		contentPane.setLayout(gbl_contentPane);
 		
 		generatedReportLabel = new JLabel("СФОРМИРОВАТЬ ОТЧЕТ");
 		GridBagConstraints gbc_generatedReportLabel = new GridBagConstraints();
 		gbc_generatedReportLabel.anchor = GridBagConstraints.WEST;
-		gbc_generatedReportLabel.gridwidth = 4;
+		gbc_generatedReportLabel.gridwidth = 5;
 		gbc_generatedReportLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_generatedReportLabel.gridx = 1;
 		gbc_generatedReportLabel.gridy = 1;
 		contentPane.add(generatedReportLabel, gbc_generatedReportLabel);
 		
-		onDateLabel = new JLabel("на дату ");
-		GridBagConstraints gbc_onDateLabel = new GridBagConstraints();
-		gbc_onDateLabel.anchor = GridBagConstraints.WEST;
-		gbc_onDateLabel.gridwidth = 2;
-		gbc_onDateLabel.insets = new Insets(0, 0, 5, 5);
-		gbc_onDateLabel.gridx = 1;
-		gbc_onDateLabel.gridy = 2;
-		contentPane.add(onDateLabel, gbc_onDateLabel);
+		fromDateLabel = new JLabel("за период с ");
+		GridBagConstraints gbc_fromDateLabel = new GridBagConstraints();
+		gbc_fromDateLabel.anchor = GridBagConstraints.WEST;
+		gbc_fromDateLabel.gridwidth = 2;
+		gbc_fromDateLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_fromDateLabel.gridx = 1;
+		gbc_fromDateLabel.gridy = 2;
+		contentPane.add(fromDateLabel, gbc_fromDateLabel);
 		
-		dateChooser = new JDateChooser();
-		GridBagConstraints gbc_dateChooser = new GridBagConstraints();
-		gbc_dateChooser.fill = GridBagConstraints.HORIZONTAL;
-		gbc_dateChooser.insets = new Insets(0, 0, 5, 5);
-		gbc_dateChooser.gridx = 3;
-		gbc_dateChooser.gridy = 2;
-		contentPane.add(dateChooser, gbc_dateChooser);
+		fromDateChooser = new JDateChooser();
+		GridBagConstraints gbc_fromDateChooser = new GridBagConstraints();
+		gbc_fromDateChooser.fill = GridBagConstraints.HORIZONTAL;
+		gbc_fromDateChooser.insets = new Insets(0, 0, 5, 5);
+		gbc_fromDateChooser.gridx = 3;
+		gbc_fromDateChooser.gridy = 2;
+		contentPane.add(fromDateChooser, gbc_fromDateChooser);
+		
+		listModel = new ResultListModel();
+		
+		toLabel = new JLabel(" по ");
+		GridBagConstraints gbc_toLabel = new GridBagConstraints();
+		gbc_toLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_toLabel.gridx = 4;
+		gbc_toLabel.gridy = 2;
+		contentPane.add(toLabel, gbc_toLabel);
+		
+		toDateChooser = new JDateChooser();
+		GridBagConstraints gbc_toDateChooser = new GridBagConstraints();
+		gbc_toDateChooser.insets = new Insets(0, 0, 5, 5);
+		gbc_toDateChooser.fill = GridBagConstraints.HORIZONTAL;
+		gbc_toDateChooser.gridx = 5;
+		gbc_toDateChooser.gridy = 2;
+		contentPane.add(toDateChooser, gbc_toDateChooser);
 		
 		JButton generateButton = new JButton("Сформировать");
 		generateButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				listModel.clear();
-				if(dateChooser.getDate() == null){
+				if((fromDateChooser.getDate() == null) || (toDateChooser.getDate() == null)){
 					JOptionPane.showMessageDialog(null, "Не выбрана дата","Внимание",JOptionPane.WARNING_MESSAGE);
 				}else{
-					generated();	
+					if(fromDateChooser.getDate().getTime()>=toDateChooser.getDate().getTime()){
+						JOptionPane.showMessageDialog(null, "Выбран неверный диапазон дат","Внимание",JOptionPane.WARNING_MESSAGE);
+					}else{
+						generated();
+					}
 				}
 			}
-		});
+		});	
 		GridBagConstraints gbc_generateButton = new GridBagConstraints();
 		gbc_generateButton.insets = new Insets(0, 0, 5, 5);
-		gbc_generateButton.gridx = 4;
+		gbc_generateButton.gridx = 6;
 		gbc_generateButton.gridy = 2;
 		contentPane.add(generateButton, gbc_generateButton);
-		
-		listModel = new ResultListModel();
 		
 		statusLabel = new JLabel("статусы");
 		GridBagConstraints gbc_statusLabel = new GridBagConstraints();
@@ -194,7 +207,7 @@ public class ReportOneDayFrame extends JFrame {
 		statusComboBox.addItem(new ResultStatusComboBoxItem("Не подписан"," AND (STATUSINVOICEEN = 'COMPLETED' OR STATUSINVOICEEN = 'ON_AGREEMENT' OR STATUSINVOICEEN = 'IN_PROGRESS' OR STATUSINVOICEEN = 'NOT_FOUND')"));
 		statusComboBox.setSelectedIndex(0);
 		GridBagConstraints gbc_statusComboBox = new GridBagConstraints();
-		gbc_statusComboBox.gridwidth = 2;
+		gbc_statusComboBox.gridwidth = 4;
 		gbc_statusComboBox.insets = new Insets(0, 0, 5, 5);
 		gbc_statusComboBox.fill = GridBagConstraints.HORIZONTAL;
 		gbc_statusComboBox.gridx = 3;
@@ -215,7 +228,7 @@ public class ReportOneDayFrame extends JFrame {
 		sortedComboBox.addItem(new ResultSortComboBoxItem("Дата совершения",UnloadedInvoiceComparators.compareToDate));
 		sortedComboBox.addItem(new ResultSortComboBoxItem("Статус",UnloadedInvoiceComparators.compareToStatus));
 		GridBagConstraints gbc_sortedComboBox = new GridBagConstraints();
-		gbc_sortedComboBox.gridwidth = 2;
+		gbc_sortedComboBox.gridwidth = 4;
 		gbc_sortedComboBox.insets = new Insets(0, 0, 5, 5);
 		gbc_sortedComboBox.fill = GridBagConstraints.HORIZONTAL;
 		gbc_sortedComboBox.gridx = 3;
@@ -236,7 +249,7 @@ public class ReportOneDayFrame extends JFrame {
 			}
 		});
 		GridBagConstraints gbc_titleList = new GridBagConstraints();
-		gbc_titleList.gridwidth = 5;
+		gbc_titleList.gridwidth = 7;
 		gbc_titleList.insets = new Insets(0, 0, 5, 5);
 		gbc_titleList.fill = GridBagConstraints.BOTH;
 		gbc_titleList.gridx = 1;
@@ -251,7 +264,7 @@ public class ReportOneDayFrame extends JFrame {
 		scroll_resultTextPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		scroll_resultTextPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		GridBagConstraints gbc_resultTextPane = new GridBagConstraints();
-		gbc_resultTextPane.gridwidth = 5;
+		gbc_resultTextPane.gridwidth = 7;
 		gbc_resultTextPane.insets = new Insets(0, 0, 5, 5);
 		gbc_resultTextPane.fill = GridBagConstraints.BOTH;
 		gbc_resultTextPane.gridx = 1;
@@ -262,8 +275,9 @@ public class ReportOneDayFrame extends JFrame {
 	private void generated(){
 		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
 		try {
-			list = WorkingIncomingTable.selectSignedNumbersInvoiceAtDate(
-					Date.valueOf(InvoiceDateFormat.dateReverseSmallDash2String(dateChooser.getDate())),
+			list = WorkingIncomingTable.selectSignedNumbersInvoiceAtBetween(
+					Date.valueOf(InvoiceDateFormat.dateReverseSmallDash2String(fromDateChooser.getDate())),
+					Date.valueOf(InvoiceDateFormat.dateReverseSmallDash2String(toDateChooser.getDate())),
 					((ResultSortComboBoxItem) sortedComboBox.getSelectedItem()).getComparator(), 
 					((ResultStatusComboBoxItem) statusComboBox.getSelectedItem()).getSql());
 		} catch (ParseException e) {
@@ -282,8 +296,9 @@ public class ReportOneDayFrame extends JFrame {
 		this.dispose();
 	}*/
 	
-	public ReportOneDayFrame open(){
+	public ReportBetweenFrame open(){
 		this.setVisible(true);
 		return this;
 	}
+
 }

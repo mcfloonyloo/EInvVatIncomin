@@ -49,7 +49,8 @@ public class MainFrame extends JFrame{
 	private JMenuItem loadFileMenuItem;
 	private JMenuItem updateStatusMenuItem;
 	private JMenuItem fastUpdateStatusMenuItem;
-	private JMenuItem saveFileMenuItem;
+	private JMenuItem saveOneDayMenuItem;
+	private JMenuItem saveBetweenMenuItem;
 	
 	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3";
 	private JTable table;
@@ -126,7 +127,7 @@ public class MainFrame extends JFrame{
 	}
 	
 	private void loadFile(){
-		if(EVatServiceSingleton.getInstance().isAuthorized()){
+		//if(EVatServiceSingleton.getInstance().isAuthorized()){
 			JFileChooser chooser = new JFileChooser();
 			int res = chooser.showDialog(null, "Открыть");
 			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
@@ -147,7 +148,8 @@ public class MainFrame extends JFrame{
 							LoadFileProgressBar progress = new LoadFileProgressBar(lines.size()).activated();
 							for(int index=0; index<lines.size();index++){
 								String[] fields = lines.get(index).split(";");
-								if(fields[0].trim().equals(Certificate.getInstance().getUnp2())){//изменить на чтение сертификата
+								//if(fields[0].trim().equals(Certificate.getInstance().getUnp2())){//изменить на чтение сертификата
+								if(fields[0].trim().equals("40007886")){//изменить на чтение сертификата
 									JOptionPane.showMessageDialog(null, "Попытка чтения файла с исходящими ЭСЧФ","Внимание",JOptionPane.WARNING_MESSAGE);
 									break;
 								}
@@ -175,9 +177,9 @@ public class MainFrame extends JFrame{
 				}			
 			};	
 			worker.execute();
-		}else{
+		/*}else{
 			JOptionPane.showMessageDialog(null, "Для обновления таблицы выставленных ЭСЧФ"+System.lineSeparator()+"необходима авторизация пользователя","Ошибка",JOptionPane.ERROR_MESSAGE);
-		}
+		}*/
 	}
 	
 	private void updateStatus(){
@@ -360,20 +362,6 @@ public class MainFrame extends JFrame{
 		
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		table.setPreferredScrollableViewportSize(Toolkit.getDefaultToolkit().getScreenSize());
-		
-		/*Incoming inc = new Incoming.Builder()
-				.setUnp("400002583")
-				.setName("Унитарное предприятие по оказанию услуг \"Гомельское отделение БелТПП\" негосударственной некоммерческой организации \"Белорусская торгово-промышленная палата\"")
-				.setNumInvoice("400002583-2016-0000006785")
-				.setStatusInvoiceRu("Выставлен. Аннулирован поставщиком")
-				.setDateIssue("13.10.2016")		 //yyyy-MM-dd'T'HH:mm:ss		
-				.setDateSignature("13.10.2016")   //yyyy-MM-dd'T'HH:mm:ss
-				.setByInvoice("400088665-2016-0000000257")
-				.setDateCancellation("13.10.2016")//yyyy-MM-dd'T'HH:mm:ss
-				.setTotalVat("000000.000")
-				.setTotalCost("000000.000")
-				.build();
-		tableModel.addRow(inc);*/
 		getContentPane().add(scrollPane_table, gbc_table);
 		
 		console = new JConsole();
@@ -520,16 +508,30 @@ public class MainFrame extends JFrame{
 		JSeparator downListSeparator = new JSeparator();
 		listMenu.add(downListSeparator);
 		
-		saveFileMenuItem = new JMenuItem("Выгрузить список в TXT");
-		saveFileMenuItem.addMouseListener(new MouseAdapter(){
+		JMenu saveMenu = new JMenu("Отчет по ЭСЧФ...");
+		listMenu.add(saveMenu);
+		
+		saveOneDayMenuItem = new JMenuItem("... за один день");
+		saveOneDayMenuItem.addMouseListener(new MouseAdapter(){
 			@Override 
 			public void mousePressed(MouseEvent evt){
-				if(saveFileMenuItem.isEnabled()){
+				if(saveOneDayMenuItem.isEnabled()){
 					new ReportOneDayFrame().open();
 				}
 			}
 		});
-		listMenu.add(saveFileMenuItem);
+		saveMenu.add(saveOneDayMenuItem);
+		
+		saveBetweenMenuItem = new JMenuItem("... за период");
+		saveBetweenMenuItem.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				if(saveBetweenMenuItem.isEnabled()){
+					new ReportBetweenFrame().open();
+				}
+			}
+		});
+		saveMenu.add(saveBetweenMenuItem);
 	}
 
 }
