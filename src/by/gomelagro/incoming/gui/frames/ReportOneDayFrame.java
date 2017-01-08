@@ -5,6 +5,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.toedter.calendar.JDateChooser;
 
@@ -43,6 +44,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.AbstractListModel;
 
 /**
@@ -96,30 +98,27 @@ public class ReportOneDayFrame extends JFrame {
 		saveMenuItem.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
-				FileWriter writer = null;
-				try {
-					writer = new FileWriter(ApplicationProperties.getInstance().getFilePath());
-					for(int index=0;index<listModel.size();index++){
-						writer.write(listModel.getElementAt(index).getTrimmed()+System.lineSeparator());
-					}
-					writer.flush();
-					JOptionPane.showMessageDialog(null, "Отчет сохранен в файл "+ApplicationProperties.getInstance().getFilePath(),"Информация",JOptionPane.INFORMATION_MESSAGE);
-				} catch (IOException e) {
-				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-				} finally {
-					if(writer != null){
-						try{
-							writer.close();
-						}catch(IOException e){
-							JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-						}
-					}
-				}
+				saveFile(ApplicationProperties.getInstance().getFilePath());
 			}
 		});
+		saveMenuItem.setEnabled(false);
 		fileMenu.add(saveMenuItem);
 		
 		saveAsMenuItem = new JMenuItem("Сохранить как...");
+		saveAsMenuItem.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				JFileChooser chooser = new JFileChooser("Сохранить как...");
+				chooser.setMultiSelectionEnabled(false);
+				chooser.addChoosableFileFilter(new FileNameExtensionFilter("Text files (.txt)", "txt"));
+				chooser.setAcceptAllFileFilterUsed(false);
+				chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+				if(chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION){
+					saveFile(chooser.getSelectedFile().getAbsolutePath().trim()+".txt");
+				}
+			}
+		});
+		saveAsMenuItem.setEnabled(false);
 		fileMenu.add(saveAsMenuItem);
 		
 		
@@ -167,6 +166,8 @@ public class ReportOneDayFrame extends JFrame {
 				if(dateChooser.getDate() == null){
 					JOptionPane.showMessageDialog(null, "Не выбрана дата","Внимание",JOptionPane.WARNING_MESSAGE);
 				}else{
+					saveMenuItem.setEnabled(true);
+					saveAsMenuItem.setEnabled(true);
 					generated();	
 				}
 			}
@@ -275,6 +276,28 @@ public class ReportOneDayFrame extends JFrame {
 			}
 		}else{
 			JOptionPane.showMessageDialog(null, "Невозможно обработать неинициализированный список","Ошибка",JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	
+	private void saveFile(String filePath){
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter(filePath);
+			for(int index=0;index<listModel.size();index++){
+				writer.write(listModel.getElementAt(index).getTrimmed()+System.lineSeparator());
+			}
+			writer.flush();
+			JOptionPane.showMessageDialog(null, "Отчет сохранен в файл "+ApplicationProperties.getInstance().getFilePath(),"Информация",JOptionPane.INFORMATION_MESSAGE);
+		} catch (IOException e) {
+		JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+		} finally {
+			if(writer != null){
+				try{
+					writer.close();
+				}catch(IOException e){
+					JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+				}
+			}
 		}
 	}
 	

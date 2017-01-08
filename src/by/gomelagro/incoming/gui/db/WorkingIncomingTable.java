@@ -158,8 +158,9 @@ public class WorkingIncomingTable {
 		
 	public static List<UnloadedInvoice> selectSignedNumbersInvoiceAtDate(Date date, Comparator<UnloadedInvoice> comparator, String status){
 		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
-		String sql;
+		String sql = "";
 		sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATECOMMISSION = '"+date.toString()+"' "+status;
+		System.out.println(sql);
 		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 			list.clear();
 			ResultSet set = statement.executeQuery(sql);
@@ -175,7 +176,7 @@ public class WorkingIncomingTable {
 				}
 				list.add(new UnloadedInvoice.Builder()
 						.setUnp(set.getString("UNP").trim())
-						.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateSmallDash(set.getString("DATECOMMISSION").trim())))
+						.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim())))
 						.setNumberInvoice(set.getString("NUMBERINVOICE").trim())
 						.setStatusInvoiceRu(statusRu)
 						.setTotalCost(set.getString("TOTALCOST").trim())
@@ -212,7 +213,7 @@ public class WorkingIncomingTable {
 				}
 				list.add(new UnloadedInvoice.Builder()
 						.setUnp(set.getString("UNP").trim())
-						.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateSmallDash(set.getString("DATECOMMISSION").trim())))
+						.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim())))
 						.setNumberInvoice(set.getString("NUMBERINVOICE").trim())
 						.setStatusInvoiceRu(statusRu)
 						.setTotalCost(set.getString("TOTALCOST").trim())

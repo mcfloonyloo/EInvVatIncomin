@@ -2,8 +2,6 @@ package by.gomelagro.incoming.gui.db.files.data;
 
 import java.awt.Color;
 
-import by.gomelagro.incoming.format.date.InvoiceDateFormat;
-
 public class UnloadedInvoice {
 	private String unp;
 	private String dateCommission;

@@ -17,6 +17,7 @@ import java.util.List;
 import javax.swing.AbstractListModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -29,6 +30,7 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.toedter.calendar.JDateChooser;
 
@@ -43,6 +45,8 @@ import by.gomelagro.incoming.gui.frames.report.ResultStatusComboBoxItem;
 import by.gomelagro.incoming.gui.frames.report.models.ResultListModel;
 import by.gomelagro.incoming.gui.frames.report.models.renderer.ResultListCellRenderer;
 import by.gomelagro.incoming.properties.ApplicationProperties;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class ReportBetweenFrame extends JFrame {
 
@@ -90,32 +94,28 @@ public class ReportBetweenFrame extends JFrame {
 		saveMenuItem.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {
-				FileWriter writer = null;
-				try {
-					writer = new FileWriter(ApplicationProperties.getInstance().getFilePath());
-					for(int index=0;index<listModel.size();index++){
-						writer.write(listModel.getElementAt(index).getTrimmed()+System.lineSeparator());
-					}
-					writer.flush();
-					JOptionPane.showMessageDialog(null, "Отчет сохранен в файл "+ApplicationProperties.getInstance().getFilePath(),"Информация",JOptionPane.INFORMATION_MESSAGE);
-				} catch (IOException e) {
-				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-				} finally {
-					if(writer != null){
-						try{
-							writer.close();
-						}catch(IOException e){
-							JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-						}
-					}
-				}
+				saveFile(ApplicationProperties.getInstance().getFilePath());
 			}
 		});
+		saveMenuItem.setEnabled(false);
 		fileMenu.add(saveMenuItem);
 		
 		saveAsMenuItem = new JMenuItem("Сохранить как...");
+		saveAsMenuItem.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				JFileChooser chooser = new JFileChooser("Сохранить как...");
+				chooser.setMultiSelectionEnabled(false);
+				chooser.addChoosableFileFilter(new FileNameExtensionFilter("Text files (.txt)", "txt"));
+				chooser.setAcceptAllFileFilterUsed(false);
+				chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+				if(chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION){
+					saveFile(chooser.getSelectedFile().getAbsolutePath().trim()+".txt");
+				}
+			}
+		});
+		saveAsMenuItem.setEnabled(false);
 		fileMenu.add(saveAsMenuItem);
-		
 		
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -181,6 +181,8 @@ public class ReportBetweenFrame extends JFrame {
 					if(fromDateChooser.getDate().getTime()>=toDateChooser.getDate().getTime()){
 						JOptionPane.showMessageDialog(null, "Выбран неверный диапазон дат","Внимание",JOptionPane.WARNING_MESSAGE);
 					}else{
+						saveMenuItem.setEnabled(true);
+						saveAsMenuItem.setEnabled(true);
 						generated();
 					}
 				}
@@ -289,6 +291,28 @@ public class ReportBetweenFrame extends JFrame {
 			}
 		}else{
 			JOptionPane.showMessageDialog(null, "Невозможно обработать неинициализированный список","Ошибка",JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	
+	private void saveFile(String filePath){
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter(filePath);
+			for(int index=0;index<listModel.size();index++){
+				writer.write(listModel.getElementAt(index).getTrimmed()+System.lineSeparator());
+			}
+			writer.flush();
+			JOptionPane.showMessageDialog(null, "Отчет сохранен в файл "+ApplicationProperties.getInstance().getFilePath(),"Информация",JOptionPane.INFORMATION_MESSAGE);
+		} catch (IOException e) {
+		JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+		} finally {
+			if(writer != null){
+				try{
+					writer.close();
+				}catch(IOException e){
+					JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+				}
+			}
 		}
 	}
 	
