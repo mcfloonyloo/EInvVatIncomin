@@ -45,8 +45,6 @@ import by.gomelagro.incoming.gui.frames.report.ResultStatusComboBoxItem;
 import by.gomelagro.incoming.gui.frames.report.models.ResultListModel;
 import by.gomelagro.incoming.gui.frames.report.models.renderer.ResultListCellRenderer;
 import by.gomelagro.incoming.properties.ApplicationProperties;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 
 public class ReportBetweenFrame extends JFrame {
 

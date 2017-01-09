@@ -4,7 +4,6 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Toolkit;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -19,9 +18,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.JTable;
 import javax.swing.JTextPane;
-import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingWorker;
 
@@ -30,12 +27,20 @@ import by.gomelagro.incoming.gui.console.JConsole;
 import by.gomelagro.incoming.gui.db.ConnectionDB;
 import by.gomelagro.incoming.gui.db.WorkingIncomingTable;
 import by.gomelagro.incoming.gui.db.files.WorkingFiles;
-import by.gomelagro.incoming.gui.frames.models.IncomingTableModel;
-import by.gomelagro.incoming.gui.frames.table.renderer.IncomingTableHeaderRenderer;
 import by.gomelagro.incoming.gui.progress.LoadFileProgressBar;
 import by.gomelagro.incoming.properties.ApplicationProperties;
 import by.gomelagro.incoming.service.EVatServiceSingleton;
 import by.gomelagro.incoming.service.certificate.Certificate;
+import javax.swing.JPanel;
+import javax.swing.JList;
+import javax.swing.JLabel;
+import javax.swing.border.BevelBorder;
+import javax.swing.ComboBoxModel;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
+import javax.swing.AbstractListModel;
 
 public class MainFrame extends JFrame{
 
@@ -52,8 +57,15 @@ public class MainFrame extends JFrame{
 	private JMenuItem saveOneDayMenuItem;
 	private JMenuItem saveBetweenMenuItem;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3";
-	private JTable table;
+	private JLabel allInvoicesLabel;
+	private JLabel completedLabel;
+	private JLabel noCompletedLabel;
+	private JLabel cancelledLabel;
+	private JLabel undeterminedLabel;
+	
+	private JComboBox<String> yearComboBox;
+	
+	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4";
 	
 	static{
 		ApplicationProperties.getInstance();	
@@ -67,6 +79,7 @@ public class MainFrame extends JFrame{
 	 */
 	public MainFrame() {
 		initialize();
+		updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
 		setVisible(true);
 	}
 
@@ -216,10 +229,8 @@ public class MainFrame extends JFrame{
 						}else{
 							JOptionPane.showMessageDialog(null, "Не загружен список ЭСЧФ для обновления статуса","Ошибка",JOptionPane.ERROR_MESSAGE);
 						}
-
 						return null;
 					}
-
 				};
 				worker.execute();
 			}else{
@@ -302,67 +313,189 @@ public class MainFrame extends JFrame{
 		gridBagLayout.rowWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
 		getContentPane().setLayout(gridBagLayout);
 		
-		IncomingTableModel tableModel = new  IncomingTableModel();
-		table = new JTable(tableModel);
-		table.setFont(new Font("Tahoma", Font.PLAIN, 11));
-		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		table.setPreferredScrollableViewportSize(table.getPreferredSize());
-		JScrollPane scrollPane_table = new JScrollPane(table);
-		scrollPane_table.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-		scrollPane_table.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-		GridBagConstraints gbc_table = new GridBagConstraints();
-		gbc_table.insets = new Insets(0, 0, 5, 0);
-		gbc_table.fill = GridBagConstraints.BOTH;
-		gbc_table.gridx = 0;
-		gbc_table.gridy = 0;
-		table.getTableHeader().setReorderingAllowed(false);
+		/*IncomingTableModel tableModel = new  IncomingTableModel();
 		for(int index = 0; index<table.getColumnCount();index++){
 			table.getColumnModel().getColumn(index).setHeaderRenderer(new IncomingTableHeaderRenderer());
-		}
-		//УНП
-		table.getColumnModel().getColumn(0).setMinWidth(60);
-		table.getColumnModel().getColumn(0).setMaxWidth(60);
-		table.getColumnModel().getColumn(0).setPreferredWidth(60);
-		//Наименование
-		table.getColumnModel().getColumn(1).setMinWidth(0);
-		table.getColumnModel().getColumn(1).setMaxWidth(0);
-		table.getColumnModel().getColumn(1).setPreferredWidth(0);
-		//Номер ЭСЧФ
-		table.getColumnModel().getColumn(2).setMinWidth(150);
-		table.getColumnModel().getColumn(2).setMaxWidth(150);
-		table.getColumnModel().getColumn(2).setPreferredWidth(150);
-		//Статус ЭСЧФ
-		table.getColumnModel().getColumn(3).setMinWidth(210);
-		table.getColumnModel().getColumn(3).setMaxWidth(210);
-		table.getColumnModel().getColumn(3).setPreferredWidth(210);
-		//Дата выставления
-		table.getColumnModel().getColumn(4).setMinWidth(110);
-		table.getColumnModel().getColumn(4).setMaxWidth(110);
-		table.getColumnModel().getColumn(4).setPreferredWidth(110);
-		//Дата подписания
-		table.getColumnModel().getColumn(5).setMinWidth(110);
-		table.getColumnModel().getColumn(5).setMaxWidth(110);
-		table.getColumnModel().getColumn(5).setPreferredWidth(110);
-		//К ЭСЧФ
-		table.getColumnModel().getColumn(6).setMinWidth(150);
-		table.getColumnModel().getColumn(6).setMaxWidth(150);
-		table.getColumnModel().getColumn(6).setPreferredWidth(150);
-		//Дата аннулирования
-		table.getColumnModel().getColumn(7).setMinWidth(110);
-		table.getColumnModel().getColumn(7).setMaxWidth(110);
-		table.getColumnModel().getColumn(7).setPreferredWidth(110);
-		//Сумма НДС
-		table.getColumnModel().getColumn(8).setMinWidth(70);
-		table.getColumnModel().getColumn(8).setMaxWidth(70);
-		table.getColumnModel().getColumn(8).setPreferredWidth(70);
-		//Общая сумма
-		table.getColumnModel().getColumn(9).setMinWidth(70);
-		table.getColumnModel().getColumn(9).setMaxWidth(70);
-		table.getColumnModel().getColumn(9).setPreferredWidth(70);
+		}*/
 		
-		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-		table.setPreferredScrollableViewportSize(Toolkit.getDefaultToolkit().getScreenSize());
-		getContentPane().add(scrollPane_table, gbc_table);
+		JPanel mainPanel = new JPanel();
+		mainPanel.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
+		GridBagConstraints gbc_mainPanel = new GridBagConstraints();
+		gbc_mainPanel.insets = new Insets(0, 0, 5, 0);
+		gbc_mainPanel.fill = GridBagConstraints.BOTH;
+		gbc_mainPanel.gridx = 0;
+		gbc_mainPanel.gridy = 0;
+		getContentPane().add(mainPanel, gbc_mainPanel);
+		GridBagLayout gbl_mainPanel = new GridBagLayout();
+		gbl_mainPanel.columnWidths = new int[]{20, 20, 0, 60, 70, 0, 0};
+		gbl_mainPanel.rowHeights = new int[]{20, 20, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_mainPanel.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_mainPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		mainPanel.setLayout(gbl_mainPanel);
+		
+		JLabel lblyearLabel = new JLabel("Год: ");
+		lblyearLabel.setFont(new Font("Courier New", Font.BOLD, 11));
+		GridBagConstraints gbc_lblyearLabel = new GridBagConstraints();
+		gbc_lblyearLabel.anchor = GridBagConstraints.EAST;
+		gbc_lblyearLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_lblyearLabel.gridx = 1;
+		gbc_lblyearLabel.gridy = 1;
+		mainPanel.add(lblyearLabel, gbc_lblyearLabel);
+		
+		yearComboBox = new JComboBox<String>();
+		yearComboBox.setFont(new Font("Courier New", Font.BOLD, 12));
+		yearComboBox.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent evt) {
+				if(evt.getStateChange() == ItemEvent.SELECTED){
+					updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
+				}
+			}
+		});
+		if(fillYear()){
+			yearComboBox.setSelectedIndex(0);
+		}else{
+			JOptionPane.showMessageDialog(null, "Невозможно обработать неинициализированный список","Ошибка",JOptionPane.ERROR_MESSAGE);
+		}
+		
+		GridBagConstraints gbc_yearComboBox = new GridBagConstraints();
+		gbc_yearComboBox.anchor = GridBagConstraints.SOUTH;
+		gbc_yearComboBox.insets = new Insets(0, 0, 5, 5);
+		gbc_yearComboBox.fill = GridBagConstraints.HORIZONTAL;
+		gbc_yearComboBox.gridx = 2;
+		gbc_yearComboBox.gridy = 1;
+		mainPanel.add(yearComboBox, gbc_yearComboBox);
+		
+		JList<String> titleList = new JList<String>();
+		titleList.setEnabled(false);
+		titleList.setFont(new Font("Courier New", Font.PLAIN, 11));
+		titleList.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
+		titleList.setModel(new AbstractListModel<String>() {
+			private static final long serialVersionUID = 1L;
+			String[] values = new String[] {"[ЗАГОЛОВОК СПИСКА СТРОКИ, СОДЕРЖАЩЕЙ СВЕДЕНИЯ ОБ ЭСЧФ И НДС ПО МЕСЯЦАМ ВЫБРАННОГО ГОДА]"};
+			public int getSize() {
+				return values.length;
+			}
+			public String getElementAt(int index) {
+				return values[index];
+			}
+		});
+		GridBagConstraints gbc_titleList = new GridBagConstraints();
+		gbc_titleList.anchor = GridBagConstraints.SOUTH;
+		gbc_titleList.insets = new Insets(0, 0, 5, 0);
+		gbc_titleList.fill = GridBagConstraints.HORIZONTAL;
+		gbc_titleList.gridx = 5;
+		gbc_titleList.gridy = 1;
+		mainPanel.add(titleList, gbc_titleList);
+		
+		JList<String> vatList = new JList<String>();
+		vatList.setFont(new Font("Courier New", Font.PLAIN, 11));
+		vatList.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
+		GridBagConstraints gbc_vatList = new GridBagConstraints();
+		gbc_vatList.gridheight = 12;
+		gbc_vatList.fill = GridBagConstraints.BOTH;
+		gbc_vatList.gridx = 5;
+		gbc_vatList.gridy = 2;
+		mainPanel.add(vatList, gbc_vatList);
+		
+		JLabel lblAllInvoicesLabel = new JLabel("Всего ЭСЧФ: ");
+		lblAllInvoicesLabel.setFont(new Font("Courier New", Font.PLAIN, 11));
+		GridBagConstraints gbc_lblAllInvoicesLabel = new GridBagConstraints();
+		gbc_lblAllInvoicesLabel.anchor = GridBagConstraints.SOUTHWEST;
+		gbc_lblAllInvoicesLabel.gridwidth = 2;
+		gbc_lblAllInvoicesLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_lblAllInvoicesLabel.gridx = 1;
+		gbc_lblAllInvoicesLabel.gridy = 2;
+		mainPanel.add(lblAllInvoicesLabel, gbc_lblAllInvoicesLabel);
+		
+		allInvoicesLabel = new JLabel("");
+		allInvoicesLabel.setFont(new Font("Courier New", Font.BOLD, 11));
+		GridBagConstraints gbc_allInvoicesLabel = new GridBagConstraints();
+		gbc_allInvoicesLabel.anchor = GridBagConstraints.SOUTHEAST;
+		gbc_allInvoicesLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_allInvoicesLabel.gridx = 3;
+		gbc_allInvoicesLabel.gridy = 2;
+		mainPanel.add(allInvoicesLabel, gbc_allInvoicesLabel);
+		
+		JLabel ofThemLabel = new JLabel("из них: ");
+		ofThemLabel.setFont(new Font("Courier New", Font.PLAIN, 11));
+		GridBagConstraints gbc_ofThemLabel = new GridBagConstraints();
+		gbc_ofThemLabel.gridwidth = 2;
+		gbc_ofThemLabel.anchor = GridBagConstraints.WEST;
+		gbc_ofThemLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_ofThemLabel.gridx = 1;
+		gbc_ofThemLabel.gridy = 3;
+		mainPanel.add(ofThemLabel, gbc_ofThemLabel);
+		
+		JLabel lblCompletedLabel = new JLabel("подписаны: ");
+		lblCompletedLabel.setFont(new Font("Courier New", Font.PLAIN, 11));
+		GridBagConstraints gbc_lblCompletedLabel = new GridBagConstraints();
+		gbc_lblCompletedLabel.anchor = GridBagConstraints.WEST;
+		gbc_lblCompletedLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_lblCompletedLabel.gridx = 2;
+		gbc_lblCompletedLabel.gridy = 4;
+		mainPanel.add(lblCompletedLabel, gbc_lblCompletedLabel);
+		
+		completedLabel = new JLabel("");
+		completedLabel.setFont(new Font("Courier New", Font.BOLD, 11));
+		GridBagConstraints gbc_completedLabel = new GridBagConstraints();
+		gbc_completedLabel.anchor = GridBagConstraints.EAST;
+		gbc_completedLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_completedLabel.gridx = 3;
+		gbc_completedLabel.gridy = 4;
+		mainPanel.add(completedLabel, gbc_completedLabel);
+		
+		JLabel lblNoCompletedLabel = new JLabel("не подписаны: ");
+		lblNoCompletedLabel.setFont(new Font("Courier New", Font.PLAIN, 11));
+		GridBagConstraints gbc_lblNoCompletedLabel = new GridBagConstraints();
+		gbc_lblNoCompletedLabel.anchor = GridBagConstraints.WEST;
+		gbc_lblNoCompletedLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_lblNoCompletedLabel.gridx = 2;
+		gbc_lblNoCompletedLabel.gridy = 5;
+		mainPanel.add(lblNoCompletedLabel, gbc_lblNoCompletedLabel);
+		
+		noCompletedLabel = new JLabel("");
+		noCompletedLabel.setFont(new Font("Courier New", Font.BOLD, 11));
+		GridBagConstraints gbc_noCompletedLabel = new GridBagConstraints();
+		gbc_noCompletedLabel.anchor = GridBagConstraints.EAST;
+		gbc_noCompletedLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_noCompletedLabel.gridx = 3;
+		gbc_noCompletedLabel.gridy = 5;
+		mainPanel.add(noCompletedLabel, gbc_noCompletedLabel);
+		
+		JLabel lblCancelledLabel = new JLabel("аннулированы: ");
+		lblCancelledLabel.setFont(new Font("Courier New", Font.PLAIN, 11));
+		GridBagConstraints gbc_lblCancelledLabel = new GridBagConstraints();
+		gbc_lblCancelledLabel.anchor = GridBagConstraints.WEST;
+		gbc_lblCancelledLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_lblCancelledLabel.gridx = 2;
+		gbc_lblCancelledLabel.gridy = 6;
+		mainPanel.add(lblCancelledLabel, gbc_lblCancelledLabel);
+		
+		cancelledLabel = new JLabel("");
+		cancelledLabel.setFont(new Font("Courier New", Font.BOLD, 11));
+		GridBagConstraints gbc_cancelledLabel = new GridBagConstraints();
+		gbc_cancelledLabel.anchor = GridBagConstraints.EAST;
+		gbc_cancelledLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_cancelledLabel.gridx = 3;
+		gbc_cancelledLabel.gridy = 6;
+		mainPanel.add(cancelledLabel, gbc_cancelledLabel);
+		
+		JLabel lblUndeterminedLabel = new JLabel("не определено: ");
+		lblUndeterminedLabel.setFont(new Font("Courier New", Font.PLAIN, 11));
+		GridBagConstraints gbc_lblUndeterminedLabel = new GridBagConstraints();
+		gbc_lblUndeterminedLabel.anchor = GridBagConstraints.WEST;
+		gbc_lblUndeterminedLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_lblUndeterminedLabel.gridx = 2;
+		gbc_lblUndeterminedLabel.gridy = 7;
+		mainPanel.add(lblUndeterminedLabel, gbc_lblUndeterminedLabel);
+		
+		undeterminedLabel = new JLabel("");
+		GridBagConstraints gbc_undeterminedLabel = new GridBagConstraints();
+		gbc_undeterminedLabel.anchor = GridBagConstraints.EAST;
+		gbc_undeterminedLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_undeterminedLabel.gridx = 3;
+		gbc_undeterminedLabel.gridy = 7;
+		mainPanel.add(undeterminedLabel, gbc_undeterminedLabel);
 		
 		console = new JConsole();
 		console.setFont(new Font("Courier New", Font.PLAIN, 11));
@@ -487,6 +620,9 @@ public class MainFrame extends JFrame{
 			public void mousePressed(MouseEvent evt){
 				if(updateStatusMenuItem.isEnabled()){
 					updateStatus();
+					
+					yearComboBox.setSelectedIndex(0);
+					updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
 				}
 			}
 		});
@@ -534,4 +670,33 @@ public class MainFrame extends JFrame{
 		saveMenu.add(saveBetweenMenuItem);
 	}
 
+	private void updateMainPanel(String year){
+		if(yearComboBox.getModel().getSize() > 0){
+			allInvoicesLabel.setText(String.valueOf(WorkingIncomingTable.getCountAll(year)));
+			completedLabel.setText(String.valueOf(WorkingIncomingTable.getCountCompleted(year)));
+			noCompletedLabel.setText(String.valueOf(WorkingIncomingTable.getCountNoCompleted(year)));
+			cancelledLabel.setText(String.valueOf(WorkingIncomingTable.getCountCancelled(year)));
+			undeterminedLabel.setText(String.valueOf(WorkingIncomingTable.getCountUndetermined(year)));				
+		}else{
+			allInvoicesLabel.setText("0");
+			completedLabel.setText("0");
+			noCompletedLabel.setText("0");
+			cancelledLabel.setText("0");
+			undeterminedLabel.setText("0");
+		}
+	}
+	
+	private boolean fillYear(){
+		List<String> list = WorkingIncomingTable.selectYearInvoice();
+		ComboBoxModel<String> model = new DefaultComboBoxModel<String>();
+		if(list == null){
+			return false;
+		}
+		for(int index=0;index<list.size();index++){
+			((DefaultComboBoxModel<String>) model).addElement(list.get(index));
+		}
+		yearComboBox.setModel(model);
+		return true;
+	}
+	
 }

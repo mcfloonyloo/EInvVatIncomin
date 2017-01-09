@@ -21,6 +21,7 @@ import by.gomelagro.incoming.status.Status;
 
 public class WorkingIncomingTable {
 	
+	//количество определенной ЭСЧФ в таблице 
 	public static int getCountRecord(String number){
 		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE NUMBERINVOICE = '"+number+"'";
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
@@ -36,8 +37,75 @@ public class WorkingIncomingTable {
 		}
 	}	
 	
-	public static int getCountAll(){
-		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING";
+	//количество всех ЭСЧФ в таблице
+	public static int getCountAll(String date){
+		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+			int count = -1;
+			ResultSet set = statement.executeQuery();
+			while(set.next()){
+				count = set.getInt(1);
+			}
+			return count;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			return -1;
+		}
+	}
+	
+	//количество подписанных ЭСЧФ в таблице
+	public static int getCountCompleted(String date){
+		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED_SIGNED' AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+			int count = -1;
+			ResultSet set = statement.executeQuery();
+			while(set.next()){
+				count = set.getInt(1);
+			}
+			return count;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			return -1;
+		}
+	}
+	
+	
+	//количество неподписанных ЭСЧФ в таблице
+	public static int getCountNoCompleted(String date){
+		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED' AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+			int count = -1;
+			ResultSet set = statement.executeQuery();
+			while(set.next()){
+				count = set.getInt(1);
+			}
+			return count;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			return -1;
+		}
+	}
+	
+	//количество отменённых ЭСЧФ
+	public static int getCountCancelled(String date){
+		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'CANCELLED' OR STATUSINVOICEEN = 'ON_AGREEMENT_CANCEL') AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+			int count = -1;
+			ResultSet set = statement.executeQuery();
+			while(set.next()){
+				count = set.getInt(1);
+			}
+			return count;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			return -1;
+		}
+	}
+	
+	//количество ЭСЧФ неопределенного статуса в таблице 
+	public static int getCountUndetermined(String date){
+		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'ON_AGREEMENT' OR "
+				+ "STATUSINVOICEEN = 'IN_PROGRESS' OR STATUSINVOICEEN = 'NOT_FOUND' OR STATUSINVOICEEN = 'ERROR') AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 			int count = -1;
 			ResultSet set = statement.executeQuery();
@@ -94,6 +162,7 @@ public class WorkingIncomingTable {
 		}
 	}
 	
+	//список всех ЭСЧФ для обновления
 	public static List<String> selectNumbersInvoice(){
 		List<String> list = new ArrayList<String>();
 		String sql = "SELECT NUMBERINVOICE FROM INCOMING";
@@ -110,9 +179,11 @@ public class WorkingIncomingTable {
 		}
 	}
 	
+	//список неподписанных ЭСЧФ для обновления
 	public static List<String> selectNotSignedNumbersInvoice(){
 		List<String> list = new ArrayList<String>();
-		String sql = "SELECT NUMBERINVOICE FROM INCOMING WHERE STATUSINVOICEEN = 'COMPLETED' OR STATUSINVOICEEN = 'ON_AGREEMENT' OR STATUSINVOICEEN = 'IN_PROGRESS' OR STATUSINVOICEEN = 'NOT_FOUND'";
+		String sql = "SELECT NUMBERINVOICE FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'COMPLETED' "
+				+ "OR STATUSINVOICEEN = 'ON_AGREEMENT' OR STATUSINVOICEEN = 'IN_PROGRESS' OR STATUSINVOICEEN = 'NOT_FOUND')";
 		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 			list.clear();
 			ResultSet set = statement.executeQuery(sql);
@@ -126,6 +197,7 @@ public class WorkingIncomingTable {
 		}
 	}
 	
+	//список ЭСЧФ для отчета
 	public static List<UnloadedInvoice> selectSignedNumbersInvoice(){
 		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
 		String sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL";
@@ -156,10 +228,10 @@ public class WorkingIncomingTable {
 		}
 	}
 		
+	//список ЭСЧФ для отчета на дату
 	public static List<UnloadedInvoice> selectSignedNumbersInvoiceAtDate(Date date, Comparator<UnloadedInvoice> comparator, String status){
 		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
-		String sql = "";
-		sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATECOMMISSION = '"+date.toString()+"' "+status;
+		String sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATECOMMISSION = '"+date.toString()+"' "+status;
 		System.out.println(sql);
 		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 			list.clear();
@@ -193,10 +265,10 @@ public class WorkingIncomingTable {
 		}
 	}
 	
+	//список ЭСЧФ для отчета на период
 	public static List<UnloadedInvoice> selectSignedNumbersInvoiceAtBetween(Date leftDate, Date rightDate, Comparator<UnloadedInvoice> comparator, String status){
 		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
-		String sql;
-		sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATECOMMISSION BETWEEN '"+leftDate.toString()+"' AND '"+rightDate.toString()+"' "+status;
+		String sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATECOMMISSION BETWEEN '"+leftDate.toString()+"' AND '"+rightDate.toString()+"' "+status;
 		System.out.println(sql);
 		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 			list.clear();
@@ -230,36 +302,23 @@ public class WorkingIncomingTable {
 		}
 	}
 	
-	public static List<UnloadedInvoice> selectSignedNumbersInvoice(Date date){
-		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
+	public static List<String> selectYearInvoice(){
+		List<String> list = new ArrayList<String>();
+		String sql = "SELECT strftime('%Y',DATECOMMISSION) as cYEAR FROM INCOMING GROUP BY cYEAR ORDER BY cYEAR";
 		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
-			String sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATE(DATECOMMISSION) = DATE('"+InvoiceDateFormat.dateSmallDot2String(date)+"')";
-			list.clear();
 			ResultSet set = statement.executeQuery(sql);
-			String statusRu = "";
 			while(set.next()){
-				if(set.getString("STATUSINVOICEEN").trim().equals("COMPLETED_SIGNED")){
-					statusRu = "Подписан";
-				}else{
-					statusRu = "Не подписан";
-				}
-				list.add(new UnloadedInvoice.Builder()
-						.setUnp(set.getString("UNP").trim())
-						.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateSmallDash(set.getString("DATECOMMISSION").trim())))
-						.setNumberInvoice(set.getString("NUMBERINVOICE").trim())
-						.setStatusInvoiceRu(statusRu)
-						.setTotalCost(set.getString("TOTALCOST").trim())
-						.setTotalVat(set.getString("TOTALVAT").trim())
-						.setTotalAll(set.getString("TOTALALL").trim())
-						.build());
+				list.add(set.getString("cYEAR"));
 			}
 			return list;
-		} catch (SQLException | ParseException e) {
+		}catch(SQLException e){
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-			return null;			
+			return null;
 		}
+		
 	}
-	
+
+	//обновление статусов ЭСЧФ
 	public static boolean updateStatus(String status, String number){
 		String sql = "UPDATE INCOMING SET STATUSINVOICEEN = ?, STATUSINVOICERU = ? WHERE NUMBERINVOICE = ?";
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
