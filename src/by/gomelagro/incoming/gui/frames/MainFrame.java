@@ -65,7 +65,7 @@ public class MainFrame extends JFrame{
 	
 	private JComboBox<String> yearComboBox;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4";
+	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.1";
 	
 	static{
 		ApplicationProperties.getInstance();	
@@ -79,7 +79,8 @@ public class MainFrame extends JFrame{
 	 */
 	public MainFrame() {
 		initialize();
-		updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
+		if(WorkingIncomingTable.getCountAll() > 0)
+			updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
 		setVisible(true);
 	}
 
@@ -158,27 +159,43 @@ public class MainFrame extends JFrame{
 							int avialCount = 0;
 							int errorCount = 0;
 							int notavialCount = 0;
+							int updateCount = 0;;
 							LoadFileProgressBar progress = new LoadFileProgressBar(lines.size()).activated();
+							//проверка наличия УНП в сертификате
+							String unp = "";
+							if(Certificate.getInstance().getUnp2().isEmpty()){//если unp2 пустой
+								if(Certificate.getInstance().getUnp101().isEmpty()){//если unp101 пустой
+									progress.disactivated();
+									JOptionPane.showMessageDialog(null, "Не обнаружен УНП. Загрузка отменена","Ошибка",JOptionPane.ERROR_MESSAGE);
+								}else{
+									unp = Certificate.getInstance().getUnp101();
+								}
+							}else{
+								unp = Certificate.getInstance().getUnp2();
+							}
 							for(int index=0; index<lines.size();index++){
-								String[] fields = lines.get(index).split(";");
-								//if(fields[0].trim().equals(Certificate.getInstance().getUnp2())){//изменить на чтение сертификата
-								if(fields[0].trim().equals("40007886")){//изменить на чтение сертификата
-									JOptionPane.showMessageDialog(null, "Попытка чтения файла с исходящими ЭСЧФ","Внимание",JOptionPane.WARNING_MESSAGE);
-									break;
+								String[] fields = lines.get(index).split(";");								
+								if(fields[0].trim().equals(unp)){//изменить на чтение сертификата
+								//if(fields[0].trim().equals("400047886")){
+									System.out.println("Запись "+index+": Попытка чтения файла с исходящими ЭСЧФ");
+								}else{
+									switch(WorkingIncomingTable.getCountRecord(fields[8])){
+									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[8]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
+									case  0: if(WorkingIncomingTable.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
+									case  1: if(WorkingIncomingTable.updateStatusFromFile(fields[10], fields[8])){updateCount++;}else{errorCount++;} break;
+									default: avialCount++; break;
+									}
+									progress.setProgress(index);		
+									if(progress.isCancelled()){
+										JOptionPane.showMessageDialog(null, "Чтение файла отменено","Внимание",JOptionPane.WARNING_MESSAGE);
+										break;
+									}
 								}
-								switch(WorkingIncomingTable.getCountRecord(fields[8])){
-								case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[8]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
-								case  0: if(WorkingIncomingTable.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
-								default: avialCount++; break;
-								}
-								progress.setProgress(index);		
-								if(progress.isCancelled()){
-									JOptionPane.showMessageDialog(null, "Чтение файла отменено","Внимание",JOptionPane.WARNING_MESSAGE);
-									break;
-								}
+								
 							}
 							JOptionPane.showMessageDialog(null, "Добавлено "+notavialCount+" ЭСЧФ"+System.lineSeparator()+
-									"Не добавлено из-за их наличия "+avialCount+" ЭСЧФ"+System.lineSeparator()+
+									"Не добавлено из-за их дублирования "+avialCount+" ЭСЧФ"+System.lineSeparator()+
+									"Обновлены статусы из файла у " + updateCount + " ЭСЧФ"+System.lineSeparator()+
 									"Не добавлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);
 							progress.disactivated();
 						}else{
@@ -190,9 +207,6 @@ public class MainFrame extends JFrame{
 				}			
 			};	
 			worker.execute();
-		/*}else{
-			JOptionPane.showMessageDialog(null, "Для обновления таблицы выставленных ЭСЧФ"+System.lineSeparator()+"необходима авторизация пользователя","Ошибка",JOptionPane.ERROR_MESSAGE);
-		}*/
 	}
 	
 	private void updateStatus(){
@@ -351,10 +365,12 @@ public class MainFrame extends JFrame{
 				}
 			}
 		});
-		if(fillYear()){
-			yearComboBox.setSelectedIndex(0);
-		}else{
-			JOptionPane.showMessageDialog(null, "Невозможно обработать неинициализированный список","Ошибка",JOptionPane.ERROR_MESSAGE);
+		if(WorkingIncomingTable.getCountAll() > 0){
+			if(fillYear()){
+				yearComboBox.setSelectedIndex(0);
+			}else{
+				JOptionPane.showMessageDialog(null, "Невозможно обработать неинициализированный список","Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
 		}
 		
 		GridBagConstraints gbc_yearComboBox = new GridBagConstraints();
@@ -605,6 +621,7 @@ public class MainFrame extends JFrame{
 			public void mousePressed(MouseEvent evt) {
 				if(loadFileMenuItem.isEnabled()){
 					loadFile();
+					selectYear();
 				}
 			}
 		});
@@ -620,9 +637,7 @@ public class MainFrame extends JFrame{
 			public void mousePressed(MouseEvent evt){
 				if(updateStatusMenuItem.isEnabled()){
 					updateStatus();
-					
-					yearComboBox.setSelectedIndex(0);
-					updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
+					selectYear();
 				}
 			}
 		});
@@ -635,6 +650,7 @@ public class MainFrame extends JFrame{
 			public void mousePressed(MouseEvent evt){
 				if(fastUpdateStatusMenuItem.isEnabled()){
 					updateStatusFast();
+					selectYear();
 				}
 			}
 		});
@@ -672,7 +688,7 @@ public class MainFrame extends JFrame{
 
 	private void updateMainPanel(String year){
 		if(yearComboBox.getModel().getSize() > 0){
-			allInvoicesLabel.setText(String.valueOf(WorkingIncomingTable.getCountAll(year)));
+			allInvoicesLabel.setText(String.valueOf(WorkingIncomingTable.getCountAllInYear(year)));
 			completedLabel.setText(String.valueOf(WorkingIncomingTable.getCountCompleted(year)));
 			noCompletedLabel.setText(String.valueOf(WorkingIncomingTable.getCountNoCompleted(year)));
 			cancelledLabel.setText(String.valueOf(WorkingIncomingTable.getCountCancelled(year)));
@@ -699,4 +715,10 @@ public class MainFrame extends JFrame{
 		return true;
 	}
 	
+	private void selectYear(){
+		if(WorkingIncomingTable.getCountAll() > 0){
+			yearComboBox.setSelectedIndex(0);
+			updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
+		}
+	}
 }
