@@ -19,14 +19,12 @@ public class BaseForm {
 			}
 		}
 
-		@SuppressWarnings("unused")
-		private static  MainFrame main;
-		
 		public static void main(String[] args) {
 			EventQueue.invokeLater(new Runnable() {
 				public void run() {
 					try {					
-						main = new MainFrame();
+						@SuppressWarnings("unused")
+						MainFrame main = new MainFrame();
 					} catch (Exception e) {
 						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 					}

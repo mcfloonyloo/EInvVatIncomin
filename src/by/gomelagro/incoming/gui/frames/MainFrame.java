@@ -8,6 +8,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.List;
 
 import javax.swing.JFileChooser;
@@ -65,7 +66,7 @@ public class MainFrame extends JFrame{
 	
 	private JComboBox<String> yearComboBox;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.1";
+	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.2";
 	
 	static{
 		ApplicationProperties.getInstance();	
@@ -163,8 +164,8 @@ public class MainFrame extends JFrame{
 							LoadFileProgressBar progress = new LoadFileProgressBar(lines.size()).activated();
 							//проверка наличия УНП в сертификате
 							String unp = "";
-							if(Certificate.getInstance().getUnp2().isEmpty()){//если unp2 пустой
-								if(Certificate.getInstance().getUnp101().isEmpty()){//если unp101 пустой
+							if(Certificate.getInstance().getUnp2() == ""){//если unp2 пустой
+								if(Certificate.getInstance().getUnp101() == ""){//если unp101 пустой
 									progress.disactivated();
 									JOptionPane.showMessageDialog(null, "Не обнаружен УНП. Загрузка отменена","Ошибка",JOptionPane.ERROR_MESSAGE);
 								}else{
@@ -173,25 +174,29 @@ public class MainFrame extends JFrame{
 							}else{
 								unp = Certificate.getInstance().getUnp2();
 							}
-							for(int index=0; index<lines.size();index++){
-								String[] fields = lines.get(index).split(";");								
-								if(fields[0].trim().equals(unp)){//изменить на чтение сертификата
-								//if(fields[0].trim().equals("400047886")){
-									System.out.println("Запись "+index+": Попытка чтения файла с исходящими ЭСЧФ");
-								}else{
-									switch(WorkingIncomingTable.getCountRecord(fields[8])){
-									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[8]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
-									case  0: if(WorkingIncomingTable.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
-									case  1: if(WorkingIncomingTable.updateStatusFromFile(fields[10], fields[8])){updateCount++;}else{errorCount++;} break;
-									default: avialCount++; break;
-									}
-									progress.setProgress(index);		
-									if(progress.isCancelled()){
-										JOptionPane.showMessageDialog(null, "Чтение файла отменено","Внимание",JOptionPane.WARNING_MESSAGE);
-										break;
+							try{
+								for(int index=0; index<lines.size();index++){
+									String[] fields = lines.get(index).split(";");								
+									if(fields[0].trim().equals(unp)){//изменить на чтение сертификата
+									//if(fields[0].trim().equals("400047886")){
+										System.out.println("Запись "+index+": Попытка чтения файла с исходящими ЭСЧФ");
+									}else{
+										switch(WorkingIncomingTable.getCountRecord(fields[8])){
+										case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[8]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
+										case  0: if(WorkingIncomingTable.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
+										case  1: if(WorkingIncomingTable.updateStatusFromFile(fields[10], fields[8])){updateCount++;}else{errorCount++;} break;
+										default: avialCount++; break;
+										}
+										progress.setProgress(index);		
+										if(progress.isCancelled()){
+											JOptionPane.showMessageDialog(null, "Загрузка файла отменена","Внимание",JOptionPane.WARNING_MESSAGE);
+											break;
+										}
 									}
 								}
-								
+							} catch (SQLException | ParseException e) {
+								JOptionPane.showMessageDialog(null, e.getLocalizedMessage()+System.lineSeparator()+"Загрузка файла прервана","Ошибка",JOptionPane.ERROR_MESSAGE);
+								progress.disactivated();
 							}
 							JOptionPane.showMessageDialog(null, "Добавлено "+notavialCount+" ЭСЧФ"+System.lineSeparator()+
 									"Не добавлено из-за их дублирования "+avialCount+" ЭСЧФ"+System.lineSeparator()+
@@ -221,21 +226,26 @@ public class MainFrame extends JFrame{
 							int errorCount = 0;
 							int mainCount = 0;
 							LoadFileProgressBar progress = new LoadFileProgressBar(list.size()).activated();
-							for(int index=0;index<list.size();index++){
-								AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index));
-								boolean isValid = status.verify();
-								if(isValid){
-									if(WorkingIncomingTable.updateStatus(status.getStatus(), list.get(index))){
-										mainCount++;
-									}else{
-										errorCount++;
+							try{
+								for(int index=0;index<list.size();index++){
+									AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index));
+									boolean isValid = status.verify();
+									if(isValid){
+										if(WorkingIncomingTable.updateStatus(status.getStatus(), list.get(index))){
+											mainCount++;
+										}else{
+											errorCount++;
+										}
+									}
+									progress.setProgress(index);		
+									if(progress.isCancelled()){
+										JOptionPane.showMessageDialog(null, "Обновление статусов отменено","Внимание",JOptionPane.WARNING_MESSAGE);
+										break;
 									}
 								}
-								progress.setProgress(index);		
-								if(progress.isCancelled()){
-									JOptionPane.showMessageDialog(null, "Обновление статусов отменено","Внимание",JOptionPane.WARNING_MESSAGE);
-									break;
-								}
+							} catch (SQLException e) {
+								JOptionPane.showMessageDialog(null, e.getLocalizedMessage()+System.lineSeparator()+"Обновление статусов прервано","Ошибка",JOptionPane.ERROR_MESSAGE);
+								progress.disactivated();	
 							}
 							JOptionPane.showMessageDialog(null, "Обновлены статусы у "+mainCount+" ЭСЧФ"+System.lineSeparator()+
 									"Не обновлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);
@@ -267,21 +277,26 @@ public class MainFrame extends JFrame{
 							int errorCount = 0;
 							int mainCount = 0;
 							LoadFileProgressBar progress = new LoadFileProgressBar(list.size()).activated();
-							for(int index=0;index<list.size();index++){
-								AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index));
-								boolean isValid = status.verify();
-								if(isValid){
-									if(WorkingIncomingTable.updateStatus(status.getStatus(), list.get(index))){
-										mainCount++;
-									}else{
-										errorCount++;
+							try{
+								for(int index=0;index<list.size();index++){
+									AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index));
+									boolean isValid = status.verify();
+									if(isValid){
+										if(WorkingIncomingTable.updateStatus(status.getStatus(), list.get(index))){
+											mainCount++;
+										}else{
+											errorCount++;
+										}
+									}
+									progress.setProgress(index);		
+									if(progress.isCancelled()){
+										JOptionPane.showMessageDialog(null, "Чтение файла отменено","Внимание",JOptionPane.WARNING_MESSAGE);
+										break;
 									}
 								}
-								progress.setProgress(index);		
-								if(progress.isCancelled()){
-									JOptionPane.showMessageDialog(null, "Чтение файла отменено","Внимание",JOptionPane.WARNING_MESSAGE);
-									break;
-								}
+							}catch (SQLException e) {
+								JOptionPane.showMessageDialog(null, e.getLocalizedMessage()+System.lineSeparator()+"Обновление статусов отменено","Ошибка",JOptionPane.ERROR_MESSAGE);
+								progress.disactivated();
 							}
 							JOptionPane.showMessageDialog(null, "Обновлены статусы у "+mainCount+" ЭСЧФ"+System.lineSeparator()+
 									"Не обновлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);

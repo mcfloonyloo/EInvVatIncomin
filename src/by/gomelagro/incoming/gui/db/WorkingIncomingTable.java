@@ -135,10 +135,12 @@ public class WorkingIncomingTable {
 		}
 	}
 	
-	public static boolean insertIncoming(String[] fields){
+	//добавление ЭСЧФ
+	public static boolean insertIncoming(String[] fields) throws SQLException, ParseException{
 		String sql = "INSERT INTO INCOMING(UNP, CODECOUNTRY, NAME, NUMBERINVOICE, TYPEINVOICE, STATUSINVOICERU, STATUSINVOICEEN, DATEISSUE, DATECOMMISSION, "
 				+ "DATESIGNATURE, BYINVOICE, DATECANCELLATION, TOTALEXCISE, TOTALVAT, TOTALALL, TOTALCOST) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+		boolean result = false;
+			PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql);
 			statement.setString(1,  fields[0]);
 			statement.setString(2,  fields[1]);
 			statement.setString(3,  fields[2]);
@@ -172,11 +174,8 @@ public class WorkingIncomingTable {
 			statement.setString(15, fields[18].replace(",", "."));
 			statement.setString(16, String.format("%.3f",(Float.parseFloat(fields[18].replace(",", "."))-Float.parseFloat(fields[17].replace(",", "."))-Float.parseFloat(fields[16].replace(",", ".")))));
 			statement.executeUpdate();
-			return true;
-		} catch (SQLException | ParseException e) {
-			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-			return false;
-		}
+			result = true;
+			return result;		
 	}
 	
 	//список всех ЭСЧФ для обновления
@@ -317,6 +316,8 @@ public class WorkingIncomingTable {
 		}
 	}
 	
+	
+	//список годов на основе таблицы
 	public static List<String> selectYearInvoice(){
 		List<String> list = new ArrayList<String>();
 		String sql = "SELECT strftime('%Y',DATECOMMISSION) as cYEAR FROM INCOMING GROUP BY cYEAR ORDER BY cYEAR";
@@ -334,31 +335,28 @@ public class WorkingIncomingTable {
 	}
 
 	//обновление статусов ЭСЧФ
-	public static boolean updateStatus(String status, String number){
+	public static boolean updateStatus(String status, String number) throws SQLException{
 		String sql = "UPDATE INCOMING SET STATUSINVOICEEN = ?, STATUSINVOICERU = ? WHERE NUMBERINVOICE = ?";
-		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+		boolean result = false;
+		PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql);
 			statement.setString(1, Status.valueOf(status.trim()).getEnValue());
 			statement.setString(2, Status.valueOf(status.trim()).getRuValue());
 			statement.setString(3, number);
 			statement.executeUpdate();
-			return true;
-		} catch (SQLException e) {
-			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-			return false;			
-		}
+			result = true;
+			return result;
 	}
 	
-	public static boolean updateStatusFromFile(String ruStatus, String number){
+	//обновление статусов при загрузке файла
+	public static boolean updateStatusFromFile(String ruStatus, String number) throws SQLException{
 		String sql = "UPDATE INCOMING SET STATUSINVOICEEN = ? WHERE NUMBERINVOICE = ?";
-		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
-			statement.setString(1, Status.valueRuOf(ruStatus.trim()));
-			statement.setString(2, number);
-			statement.executeUpdate();
-			return true;
-		} catch (SQLException e) {
-			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-			return false;			
-		}
+		boolean result = false;
+		PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql);
+		statement.setString(1, Status.valueRuOf(ruStatus.trim()));
+		statement.setString(2, number);
+		statement.executeUpdate();
+		result = true;
+		return result;
 	}
 	
 }

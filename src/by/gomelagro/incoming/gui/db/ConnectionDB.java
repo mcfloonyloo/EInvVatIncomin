@@ -40,14 +40,6 @@ public class ConnectionDB {
 				}
 			}
 		}
-		if(!instance.getConnection().equals(ApplicationProperties.getInstance().getDbPath())){
-			try {
-				instance.close();
-				instance.load();
-			} catch (SQLException | ClassNotFoundException e) {
-				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-			}
-		}
 		return localInstance;
 	}
 	

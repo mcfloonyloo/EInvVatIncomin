@@ -49,7 +49,7 @@ public enum Status {
 		case "Выставлен. Подписан получателем": value = "COMPLETED_SIGNED"; break;
 		case "На согласовании": value = "ON_AGREEMENT"; break;
 		case "Аннулирован": value = "CANCELLED"; break;
-		case "Выставлен. Аннулирован поставщиком": value = "ВыставленON_AGREEMENT_CANCEL"; break;
+		case "Выставлен. Аннулирован поставщиком": value = "ON_AGREEMENT_CANCEL"; break;
 		case "ЭСЧФ находится в обработке. Запросите статус повторно через 3 часа": value = "IN_PROGRESS"; break;
 		case "ЭСЧФ нет в базе или нет права для просмотра статуса/выгрузки документа": value = "NOT_FOUND"; break;
 		case "Ошибка при выставлении ЭСЧФ на портал": value = "ERROR"; break;
