@@ -6,6 +6,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -36,6 +37,7 @@ import javax.swing.JPanel;
 import javax.swing.JList;
 import javax.swing.JLabel;
 import javax.swing.border.BevelBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
@@ -66,7 +68,7 @@ public class MainFrame extends JFrame{
 	
 	private JComboBox<String> yearComboBox;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.2";
+	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.3";
 	
 	static{
 		ApplicationProperties.getInstance();	
@@ -79,10 +81,25 @@ public class MainFrame extends JFrame{
 	 * Create the application.
 	 */
 	public MainFrame() {
-		initialize();
-		if(WorkingIncomingTable.getCountAll() > 0)
-			updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
-		setVisible(true);
+		if(isFile(ApplicationProperties.getInstance().getDbPath())){
+			initialize();
+			if(WorkingIncomingTable.getCountAll() > 0)
+				updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
+			setVisible(true);
+		}else{
+			JOptionPane.showMessageDialog(null, "Отсутствует файл базы данных."+System.lineSeparator()+
+					"Выберите файл базы данных.","Внимание",JOptionPane.WARNING_MESSAGE);
+			JFileChooser chooser = new JFileChooser();
+			chooser.setMultiSelectionEnabled(false);
+			chooser.addChoosableFileFilter(new FileNameExtensionFilter("SQLite Databases (.sqlite)", "sqlite"));
+			chooser.setAcceptAllFileFilterUsed(false);
+			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			if(chooser.showDialog(null,"Сохранить файл") == JFileChooser.APPROVE_OPTION){
+				ApplicationProperties.getInstance().setDbPath(chooser.getSelectedFile().getAbsolutePath().trim());
+				JOptionPane.showMessageDialog(null, "Новый путь к файлу базы данных записан в настройках программы."+System.lineSeparator()+
+						"Пожалуйста, повторно запустите программу","Информация",JOptionPane.INFORMATION_MESSAGE);
+			}
+		}
 	}
 
 	/**
@@ -113,8 +130,6 @@ public class MainFrame extends JFrame{
 				
 				updateStatusMenuItem.setEnabled(true);
 				fastUpdateStatusMenuItem.setEnabled(true);
-				
-				//saveFileMenuItem.setEnabled(true);
 			}else{
 				System.err.println("Ошибка подключения к сервису "+ApplicationProperties.getInstance().getUrlService());
 			}
@@ -132,8 +147,6 @@ public class MainFrame extends JFrame{
 					
 					updateStatusMenuItem.setEnabled(false);
 					fastUpdateStatusMenuItem.setEnabled(false);
-					
-					//saveFileMenuItem.setEnabled(false);
 				}else{
 					System.err.println("Ошибка отключения от сервиса "+ApplicationProperties.getInstance().getUrlService());
 				}
@@ -146,7 +159,6 @@ public class MainFrame extends JFrame{
 			JFileChooser chooser = new JFileChooser();
 			int res = chooser.showDialog(null, "Открыть");
 			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
-				
 				@Override
 				protected Void doInBackground() throws Exception {
 					List<String> lines = null;
@@ -218,7 +230,6 @@ public class MainFrame extends JFrame{
 		if(EVatServiceSingleton.getInstance().isAuthorized()){
 			if(EVatServiceSingleton.getInstance().isConnected()){
 				SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
-
 					@Override
 					protected Void doInBackground() throws Exception {
 						List<String> list = WorkingIncomingTable.selectNumbersInvoice();
@@ -269,7 +280,6 @@ public class MainFrame extends JFrame{
 		if(EVatServiceSingleton.getInstance().isAuthorized()){
 			if(EVatServiceSingleton.getInstance().isConnected()){
 				SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
-
 					@Override
 					protected Void doInBackground() throws Exception {
 						List<String> list = WorkingIncomingTable.selectNotSignedNumbersInvoice();
@@ -304,10 +314,8 @@ public class MainFrame extends JFrame{
 						}else{
 							JOptionPane.showMessageDialog(null, "Не загружен список ЭСЧФ для обновления статуса","Ошибка",JOptionPane.ERROR_MESSAGE);
 						}
-
 						return null;
 					}
-
 				};
 				worker.execute();
 			}else{
@@ -341,11 +349,6 @@ public class MainFrame extends JFrame{
 		gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
 		gridBagLayout.rowWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
 		getContentPane().setLayout(gridBagLayout);
-		
-		/*IncomingTableModel tableModel = new  IncomingTableModel();
-		for(int index = 0; index<table.getColumnCount();index++){
-			table.getColumnModel().getColumn(index).setHeaderRenderer(new IncomingTableHeaderRenderer());
-		}*/
 		
 		JPanel mainPanel = new JPanel();
 		mainPanel.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
@@ -734,6 +737,16 @@ public class MainFrame extends JFrame{
 		if(WorkingIncomingTable.getCountAll() > 0){
 			yearComboBox.setSelectedIndex(0);
 			updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
+		}
+	}
+	
+	private boolean isFile(String filePath){
+		File file = new File(filePath);
+		if(file.exists() && file.isFile()){
+			return true;
+		}
+		else{
+			return false;
 		}
 	}
 }

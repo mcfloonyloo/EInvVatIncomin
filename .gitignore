@@ -1,9 +1,4 @@
 /bin/
 /libraries/
 /database.sqlite
-/hs_err_pid4932.log
-/hs_err_pid6448.log
-/hs_err_pid6944.log
-/hs_err_pid6988.log
-/hs_err_pid3288.log
-/hs_err_pid4440.log
+/build.xml
