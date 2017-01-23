@@ -301,10 +301,6 @@ public class ReportOneDayFrame extends JFrame {
 		}
 	}
 	
-	/*private void disposeFrame(){
-		this.dispose();
-	}*/
-	
 	public ReportOneDayFrame open(){
 		this.setVisible(true);
 		return this;

@@ -23,6 +23,7 @@ public class WorkingIncomingTable {
 	
 	//количество всех ЭСЧФ в таблице
 	public static int getCountAll(){
+		
 		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL";
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 			int count = -1;
@@ -227,6 +228,7 @@ public class WorkingIncomingTable {
 				}else{
 					statusRu = "Не подписан";
 				}
+				
 				list.add(new UnloadedInvoice.Builder()
 						.setUnp(set.getString("UNP").trim())
 						.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateSmallDash(set.getString("DATECOMMISSION").trim())))

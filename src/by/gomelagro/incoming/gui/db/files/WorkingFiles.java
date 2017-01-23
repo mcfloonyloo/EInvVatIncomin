@@ -26,4 +26,14 @@ public class WorkingFiles {
 		reader.close();
 		return lines;
 	}
+	
+	public static boolean isFile(String filePath){
+		File file = new File(filePath);
+		if(file.exists() && file.isFile()){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
 }

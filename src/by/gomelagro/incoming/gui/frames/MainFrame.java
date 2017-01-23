@@ -4,51 +4,50 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
 
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingWorker;
+import javax.swing.border.BevelBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
-import by.avest.edoc.client.AvEStatus;
 import by.gomelagro.incoming.gui.console.JConsole;
 import by.gomelagro.incoming.gui.db.ConnectionDB;
 import by.gomelagro.incoming.gui.db.WorkingIncomingTable;
 import by.gomelagro.incoming.gui.db.files.WorkingFiles;
+import by.gomelagro.incoming.gui.frames.enstatus.UpdateEnStatus;
 import by.gomelagro.incoming.gui.progress.LoadFileProgressBar;
 import by.gomelagro.incoming.properties.ApplicationProperties;
 import by.gomelagro.incoming.service.EVatServiceSingleton;
 import by.gomelagro.incoming.service.certificate.Certificate;
-import javax.swing.JPanel;
-import javax.swing.JList;
-import javax.swing.JLabel;
-import javax.swing.border.BevelBorder;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.ComboBoxModel;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JComboBox;
-import java.awt.event.ItemListener;
-import java.awt.event.ItemEvent;
-import javax.swing.AbstractListModel;
 
 public class MainFrame extends JFrame{
 
 	private static final long serialVersionUID = 1L;
-	//private JFrame frame;
+
 	private JTextPane console;
 	private JMenuItem authMenuItem;
 	private JMenuItem infoCertMenuItem;
@@ -68,7 +67,7 @@ public class MainFrame extends JFrame{
 	
 	private JComboBox<String> yearComboBox;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.3";
+	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.4";
 	
 	static{
 		ApplicationProperties.getInstance();	
@@ -81,7 +80,7 @@ public class MainFrame extends JFrame{
 	 * Create the application.
 	 */
 	public MainFrame() {
-		if(isFile(ApplicationProperties.getInstance().getDbPath())){
+		if(WorkingFiles.isFile(ApplicationProperties.getInstance().getDbPath())){
 			initialize();
 			if(WorkingIncomingTable.getCountAll() > 0)
 				updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
@@ -100,234 +99,6 @@ public class MainFrame extends JFrame{
 						"Пожалуйста, повторно запустите программу","Информация",JOptionPane.INFORMATION_MESSAGE);
 			}
 		}
-	}
-
-	/**
-	 * Methods autherization and connection to service
-	 */
-	private void autherization(){
-		EVatServiceSingleton.getInstance().autherization(ApplicationProperties.getInstance());
-		if(EVatServiceSingleton.getInstance().isAuthorized()){
-			System.out.println("Авторизация пройдена");
-			authMenuItem.setEnabled(false);
-			connectMenuItem.setEnabled(true);
-			disconnectMenuItem.setEnabled(false);
-			infoCertMenuItem.setEnabled(true);
-			loadFileMenuItem.setEnabled(true);
-			setTitle(title+" ["+ Certificate.getInstance().getOrgName().trim() +" " +Certificate.getInstance().getLastName().trim()+" "+Certificate.getInstance().getFirstMiddleName()+"]");
-		}
-	}
-	
-	private void connect(){
-		if(EVatServiceSingleton.getInstance().isAuthorized()){
-			EVatServiceSingleton.getInstance().connect();
-			if(EVatServiceSingleton.getInstance().isConnected()){
-				console.setText("");
-				System.out.println("Авторизация пройдена");
-				System.out.println("Подключение к сервису "+ApplicationProperties.getInstance().getUrlService()+" выполнено успешно");
-				connectMenuItem.setEnabled(false);
-				disconnectMenuItem.setEnabled(true);
-				
-				updateStatusMenuItem.setEnabled(true);
-				fastUpdateStatusMenuItem.setEnabled(true);
-			}else{
-				System.err.println("Ошибка подключения к сервису "+ApplicationProperties.getInstance().getUrlService());
-			}
-		}
-	}
-	
-	private void disconnect(){
-		if(EVatServiceSingleton.getInstance().isAuthorized()){
-			if(EVatServiceSingleton.getInstance().isConnected()){
-				EVatServiceSingleton.getInstance().disconnect();
-				if(!EVatServiceSingleton.getInstance().isConnected()){
-					System.out.println("Отключение от сервиса "+ApplicationProperties.getInstance().getUrlService()+" выполнено успешно");
-					connectMenuItem.setEnabled(true);
-					disconnectMenuItem.setEnabled(false);
-					
-					updateStatusMenuItem.setEnabled(false);
-					fastUpdateStatusMenuItem.setEnabled(false);
-				}else{
-					System.err.println("Ошибка отключения от сервиса "+ApplicationProperties.getInstance().getUrlService());
-				}
-			}
-		}
-	}
-	
-	private void loadFile(){
-		//if(EVatServiceSingleton.getInstance().isAuthorized()){
-			JFileChooser chooser = new JFileChooser();
-			int res = chooser.showDialog(null, "Открыть");
-			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
-				@Override
-				protected Void doInBackground() throws Exception {
-					List<String> lines = null;
-					if(res == JFileChooser.APPROVE_OPTION){
-						try {
-							lines = WorkingFiles.readCSVFile(chooser.getSelectedFile());
-						} catch (IOException e) {
-							JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-						}
-						if(lines != null){
-							int avialCount = 0;
-							int errorCount = 0;
-							int notavialCount = 0;
-							int updateCount = 0;;
-							LoadFileProgressBar progress = new LoadFileProgressBar(lines.size()).activated();
-							//проверка наличия УНП в сертификате
-							String unp = "";
-							if(Certificate.getInstance().getUnp2() == ""){//если unp2 пустой
-								if(Certificate.getInstance().getUnp101() == ""){//если unp101 пустой
-									progress.disactivated();
-									JOptionPane.showMessageDialog(null, "Не обнаружен УНП. Загрузка отменена","Ошибка",JOptionPane.ERROR_MESSAGE);
-								}else{
-									unp = Certificate.getInstance().getUnp101();
-								}
-							}else{
-								unp = Certificate.getInstance().getUnp2();
-							}
-							try{
-								for(int index=0; index<lines.size();index++){
-									String[] fields = lines.get(index).split(";");								
-									if(fields[0].trim().equals(unp)){//изменить на чтение сертификата
-									//if(fields[0].trim().equals("400047886")){
-										System.out.println("Запись "+index+": Попытка чтения файла с исходящими ЭСЧФ");
-									}else{
-										switch(WorkingIncomingTable.getCountRecord(fields[8])){
-										case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[8]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
-										case  0: if(WorkingIncomingTable.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
-										case  1: if(WorkingIncomingTable.updateStatusFromFile(fields[10], fields[8])){updateCount++;}else{errorCount++;} break;
-										default: avialCount++; break;
-										}
-										progress.setProgress(index);		
-										if(progress.isCancelled()){
-											JOptionPane.showMessageDialog(null, "Загрузка файла отменена","Внимание",JOptionPane.WARNING_MESSAGE);
-											break;
-										}
-									}
-								}
-							} catch (SQLException | ParseException e) {
-								JOptionPane.showMessageDialog(null, e.getLocalizedMessage()+System.lineSeparator()+"Загрузка файла прервана","Ошибка",JOptionPane.ERROR_MESSAGE);
-								progress.disactivated();
-							}
-							JOptionPane.showMessageDialog(null, "Добавлено "+notavialCount+" ЭСЧФ"+System.lineSeparator()+
-									"Не добавлено из-за их дублирования "+avialCount+" ЭСЧФ"+System.lineSeparator()+
-									"Обновлены статусы из файла у " + updateCount + " ЭСЧФ"+System.lineSeparator()+
-									"Не добавлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);
-							progress.disactivated();
-						}else{
-							JOptionPane.showMessageDialog(null, "Загружен файл неверной структуры"+System.lineSeparator()+
-									"Выберите другой файл","Ошибка",JOptionPane.ERROR_MESSAGE);
-						}
-					}
-					return null;		
-				}			
-			};	
-			worker.execute();
-	}
-	
-	private void updateStatus(){
-		if(EVatServiceSingleton.getInstance().isAuthorized()){
-			if(EVatServiceSingleton.getInstance().isConnected()){
-				SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
-					@Override
-					protected Void doInBackground() throws Exception {
-						List<String> list = WorkingIncomingTable.selectNumbersInvoice();
-						if(list != null){
-							int errorCount = 0;
-							int mainCount = 0;
-							LoadFileProgressBar progress = new LoadFileProgressBar(list.size()).activated();
-							try{
-								for(int index=0;index<list.size();index++){
-									AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index));
-									boolean isValid = status.verify();
-									if(isValid){
-										if(WorkingIncomingTable.updateStatus(status.getStatus(), list.get(index))){
-											mainCount++;
-										}else{
-											errorCount++;
-										}
-									}
-									progress.setProgress(index);		
-									if(progress.isCancelled()){
-										JOptionPane.showMessageDialog(null, "Обновление статусов отменено","Внимание",JOptionPane.WARNING_MESSAGE);
-										break;
-									}
-								}
-							} catch (SQLException e) {
-								JOptionPane.showMessageDialog(null, e.getLocalizedMessage()+System.lineSeparator()+"Обновление статусов прервано","Ошибка",JOptionPane.ERROR_MESSAGE);
-								progress.disactivated();	
-							}
-							JOptionPane.showMessageDialog(null, "Обновлены статусы у "+mainCount+" ЭСЧФ"+System.lineSeparator()+
-									"Не обновлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);
-							progress.disactivated();
-						}else{
-							JOptionPane.showMessageDialog(null, "Не загружен список ЭСЧФ для обновления статуса","Ошибка",JOptionPane.ERROR_MESSAGE);
-						}
-						return null;
-					}
-				};
-				worker.execute();
-			}else{
-				JOptionPane.showMessageDialog(null, "Сервис не подключен","Ошибка",JOptionPane.ERROR_MESSAGE);
-			}
-		}else{
-			JOptionPane.showMessageDialog(null, "Авторизация не пройдена","Ошибка",JOptionPane.ERROR_MESSAGE);
-		}
-	}
-	
-	private void updateStatusFast(){
-		if(EVatServiceSingleton.getInstance().isAuthorized()){
-			if(EVatServiceSingleton.getInstance().isConnected()){
-				SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
-					@Override
-					protected Void doInBackground() throws Exception {
-						List<String> list = WorkingIncomingTable.selectNotSignedNumbersInvoice();
-						if(list != null){
-							int errorCount = 0;
-							int mainCount = 0;
-							LoadFileProgressBar progress = new LoadFileProgressBar(list.size()).activated();
-							try{
-								for(int index=0;index<list.size();index++){
-									AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index));
-									boolean isValid = status.verify();
-									if(isValid){
-										if(WorkingIncomingTable.updateStatus(status.getStatus(), list.get(index))){
-											mainCount++;
-										}else{
-											errorCount++;
-										}
-									}
-									progress.setProgress(index);		
-									if(progress.isCancelled()){
-										JOptionPane.showMessageDialog(null, "Чтение файла отменено","Внимание",JOptionPane.WARNING_MESSAGE);
-										break;
-									}
-								}
-							}catch (SQLException e) {
-								JOptionPane.showMessageDialog(null, e.getLocalizedMessage()+System.lineSeparator()+"Обновление статусов отменено","Ошибка",JOptionPane.ERROR_MESSAGE);
-								progress.disactivated();
-							}
-							JOptionPane.showMessageDialog(null, "Обновлены статусы у "+mainCount+" ЭСЧФ"+System.lineSeparator()+
-									"Не обновлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);
-							progress.disactivated();
-						}else{
-							JOptionPane.showMessageDialog(null, "Не загружен список ЭСЧФ для обновления статуса","Ошибка",JOptionPane.ERROR_MESSAGE);
-						}
-						return null;
-					}
-				};
-				worker.execute();
-			}else{
-				JOptionPane.showMessageDialog(null, "Сервис не подключен","Ошибка",JOptionPane.ERROR_MESSAGE);
-			}
-		}else{
-			JOptionPane.showMessageDialog(null, "Авторизация не пройдена","Ошибка",JOptionPane.ERROR_MESSAGE);
-		}
-	}
-	
-	private void showInfoCertificate(){
-		new ShowCertificateFrame().open();
 	}
 	
 	/**
@@ -616,16 +387,7 @@ public class MainFrame extends JFrame{
 		exitMenuItem.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
-				String textDialog;
-				if(EVatServiceSingleton.getInstance().isAuthorized()){
-					textDialog = "Завершить работу программы?"+System.lineSeparator()+"Авторизованный сеанс будет закрыт";
-				}else{
-					textDialog = "Завершить работу программы?";
-				}
-				
-				if(JOptionPane.showConfirmDialog(null, textDialog,"Завершение работы",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
-					System.exit(1);
-				}
+				exit();
 			}
 		});
 		fileMenu.add(exitMenuItem);
@@ -654,7 +416,7 @@ public class MainFrame extends JFrame{
 			@Override 
 			public void mousePressed(MouseEvent evt){
 				if(updateStatusMenuItem.isEnabled()){
-					updateStatus();
+					UpdateEnStatus.updateFull();
 					selectYear();
 				}
 			}
@@ -667,7 +429,7 @@ public class MainFrame extends JFrame{
 			@Override 
 			public void mousePressed(MouseEvent evt){
 				if(fastUpdateStatusMenuItem.isEnabled()){
-					updateStatusFast();
+					UpdateEnStatus.updateFast();
 					selectYear();
 				}
 			}
@@ -704,6 +466,9 @@ public class MainFrame extends JFrame{
 		saveMenu.add(saveBetweenMenuItem);
 	}
 
+	/**
+	 * Processing methods fill combobox and labels
+	 */	
 	private void updateMainPanel(String year){
 		if(yearComboBox.getModel().getSize() > 0){
 			allInvoicesLabel.setText(String.valueOf(WorkingIncomingTable.getCountAllInYear(year)));
@@ -740,13 +505,143 @@ public class MainFrame extends JFrame{
 		}
 	}
 	
-	private boolean isFile(String filePath){
-		File file = new File(filePath);
-		if(file.exists() && file.isFile()){
-			return true;
+	/**
+	 * Methods autherization and connection to service
+	 */
+	private void autherization(){
+		EVatServiceSingleton.getInstance().autherization(ApplicationProperties.getInstance());
+		if(EVatServiceSingleton.getInstance().isAuthorized()){
+			System.out.println("Авторизация пройдена");
+			authMenuItem.setEnabled(false);
+			connectMenuItem.setEnabled(true);
+			disconnectMenuItem.setEnabled(false);
+			infoCertMenuItem.setEnabled(true);
+			loadFileMenuItem.setEnabled(true);
+			setTitle(title+" ["+ Certificate.getInstance().getOrgName().trim() +" " +Certificate.getInstance().getLastName().trim()+" "+Certificate.getInstance().getFirstMiddleName()+"]");
 		}
-		else{
-			return false;
+	}
+	
+	private void connect(){
+		if(EVatServiceSingleton.getInstance().isAuthorized()){
+			EVatServiceSingleton.getInstance().connect();
+			if(EVatServiceSingleton.getInstance().isConnected()){
+				console.setText("");
+				System.out.println("Авторизация пройдена");
+				System.out.println("Подключение к сервису "+ApplicationProperties.getInstance().getUrlService()+" выполнено успешно");
+				connectMenuItem.setEnabled(false);
+				disconnectMenuItem.setEnabled(true);
+				
+				updateStatusMenuItem.setEnabled(true);
+				fastUpdateStatusMenuItem.setEnabled(true);
+			}else{
+				System.err.println("Ошибка подключения к сервису "+ApplicationProperties.getInstance().getUrlService());
+			}
 		}
+	}
+	
+	private void disconnect(){
+		if(EVatServiceSingleton.getInstance().isAuthorized()){
+			if(EVatServiceSingleton.getInstance().isConnected()){
+				EVatServiceSingleton.getInstance().disconnect();
+				if(!EVatServiceSingleton.getInstance().isConnected()){
+					System.out.println("Отключение от сервиса "+ApplicationProperties.getInstance().getUrlService()+" выполнено успешно");
+					connectMenuItem.setEnabled(true);
+					disconnectMenuItem.setEnabled(false);
+					
+					updateStatusMenuItem.setEnabled(false);
+					fastUpdateStatusMenuItem.setEnabled(false);
+				}else{
+					System.err.println("Ошибка отключения от сервиса "+ApplicationProperties.getInstance().getUrlService());
+				}
+			}
+		}
+	}
+	
+	private void loadFile(){
+		JFileChooser chooser = new JFileChooser();
+		int res = chooser.showDialog(null, "Открыть");
+		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
+			@Override
+			protected Void doInBackground() throws Exception {
+				List<String> lines = null;
+				if(res == JFileChooser.APPROVE_OPTION){
+					try {
+						lines = WorkingFiles.readCSVFile(chooser.getSelectedFile());
+					} catch (IOException e) {
+						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+					}
+					if(lines != null){
+						int avialCount = 0;
+						int errorCount = 0;
+						int notavialCount = 0;
+						int updateCount = 0;;
+						LoadFileProgressBar progress = new LoadFileProgressBar(lines.size()).activated();
+						//проверка наличия УНП в сертификате
+						String unp = "";
+						if(Certificate.getInstance().getUnp2() == ""){//если unp2 пустой
+							if(Certificate.getInstance().getUnp101() == ""){//если unp101 пустой
+								progress.disactivated();
+								JOptionPane.showMessageDialog(null, "Не обнаружен УНП. Загрузка отменена","Ошибка",JOptionPane.ERROR_MESSAGE);
+							}else{
+								unp = Certificate.getInstance().getUnp101();
+							}
+						}else{
+							unp = Certificate.getInstance().getUnp2();
+						}
+						try{
+							for(int index=0; index<lines.size();index++){
+								String[] fields = lines.get(index).split(";");								
+								if(fields[0].trim().equals(unp)){//изменить на чтение сертификата
+								//if(fields[0].trim().equals("400047886")){
+									System.out.println("Запись "+index+": Попытка чтения файла с исходящими ЭСЧФ");
+								}else{
+									switch(WorkingIncomingTable.getCountRecord(fields[8])){
+									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[8]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
+									case  0: if(WorkingIncomingTable.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
+									case  1: if(WorkingIncomingTable.updateStatusFromFile(fields[10], fields[8])){updateCount++;}else{errorCount++;} break;
+									default: avialCount++; break;
+									}
+									progress.setProgress(index);		
+									if(progress.isCancelled()){
+										JOptionPane.showMessageDialog(null, "Загрузка файла отменена","Внимание",JOptionPane.WARNING_MESSAGE);
+										break;
+									}
+								}
+							}
+						} catch (SQLException | ParseException e) {
+							JOptionPane.showMessageDialog(null, e.getLocalizedMessage()+System.lineSeparator()+"Загрузка файла прервана","Ошибка",JOptionPane.ERROR_MESSAGE);
+							progress.disactivated();
+						}
+						JOptionPane.showMessageDialog(null, "Добавлено "+notavialCount+" ЭСЧФ"+System.lineSeparator()+
+								"Не добавлено из-за их дублирования "+avialCount+" ЭСЧФ"+System.lineSeparator()+
+								"Обновлены статусы из файла у " + updateCount + " ЭСЧФ"+System.lineSeparator()+
+								"Не добавлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);
+						progress.disactivated();
+					}else{
+						JOptionPane.showMessageDialog(null, "Загружен файл неверной структуры"+System.lineSeparator()+
+								"Выберите другой файл","Ошибка",JOptionPane.ERROR_MESSAGE);
+					}
+				}
+				return null;		
+			}			
+		};	
+		worker.execute();
+	}
+		
+	private void exit(){
+		String textDialog;
+		if(EVatServiceSingleton.getInstance().isAuthorized()){
+			textDialog = "Завершить работу программы?"+System.lineSeparator()+"Авторизованный сеанс будет закрыт";
+		}else{
+			textDialog = "Завершить работу программы?";
+		}
+		
+		if(JOptionPane.showConfirmDialog(null, textDialog,"Завершение работы",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
+			System.exit(1);
+		}
+	}
+	
+	private void showInfoCertificate(){
+		new ShowCertificateFrame().open();
 	}
 }
