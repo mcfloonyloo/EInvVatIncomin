@@ -193,6 +193,7 @@ public class ReportOneDayFrame extends JFrame {
 		statusComboBox.addItem(new ResultStatusComboBoxItem("Все",""));
 		statusComboBox.addItem(new ResultStatusComboBoxItem("Подписан"," AND STATUSINVOICEEN = 'COMPLETED_SIGNED'"));
 		statusComboBox.addItem(new ResultStatusComboBoxItem("Не подписан"," AND (STATUSINVOICEEN = 'COMPLETED' OR STATUSINVOICEEN = 'ON_AGREEMENT' OR STATUSINVOICEEN = 'IN_PROGRESS' OR STATUSINVOICEEN = 'NOT_FOUND')"));
+		statusComboBox.addItem(new ResultStatusComboBoxItem("Аннулирован"," AND (STATUSINVOICEEN = 'CANCELLED' OR STATUSINVOICEEN = 'ON_AGREEMENT_CANCELLED')"));
 		statusComboBox.setSelectedIndex(0);
 		GridBagConstraints gbc_statusComboBox = new GridBagConstraints();
 		gbc_statusComboBox.gridwidth = 2;

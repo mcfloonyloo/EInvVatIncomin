@@ -67,7 +67,7 @@ public class MainFrame extends JFrame{
 	
 	private JComboBox<String> yearComboBox;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.5";
+	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.6";
 	
 	static{
 		ApplicationProperties.getInstance();	
@@ -594,12 +594,12 @@ public class MainFrame extends JFrame{
 								String[] fields = lines.get(index).split(";");								
 								if(fields[0].trim().equals(unp)){//изменить на чтение сертификата
 								//if(fields[0].trim().equals("400047886")){
-									System.out.println("Запись "+index+": Попытка чтения файла с исходящими ЭСЧФ");
+									System.out.println("Запись "+(index+1)+": Попытка чтения записи исходящей ЭСЧФ из файла");
 								}else{
-									switch(WorkingIncomingTable.getCountRecord(fields[8])){
-									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[8]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
+									switch(WorkingIncomingTable.getCountRecord(fields[10])){
+									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[10]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
 									case  0: if(WorkingIncomingTable.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
-									case  1: if(WorkingIncomingTable.updateStatusFromFile(fields[10], fields[8])){updateCount++;}else{errorCount++;} break;
+									case  1: if(WorkingIncomingTable.updateStatusFromFile(fields[12], fields[10])){updateCount++;}else{errorCount++;} break;
 									default: avialCount++; break;
 									}
 									progress.setProgress(index);		

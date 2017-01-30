@@ -259,7 +259,11 @@ public class WorkingIncomingTable {
 				if(set.getString("STATUSINVOICEEN").trim().equals("COMPLETED_SIGNED")){
 					statusRu = "Подписан";
 					color = ResultFont.getGreen();
-				}else{
+				}else if((set.getString("STATUSINVOICEEN").trim().equals("CANCELLED"))||(set.getString("STATUSINVOICEEN").trim().equals("ON_AGREEMENT_CANCELLED"))){
+					statusRu = "Аннулирован";
+					color = ResultFont.getBlack();
+				}
+				else{
 					statusRu = "Не подписан";
 					color = ResultFont.getRed();
 				}
@@ -295,7 +299,11 @@ public class WorkingIncomingTable {
 				if(set.getString("STATUSINVOICEEN").trim().equals("COMPLETED_SIGNED")){
 					statusRu = "Подписан";
 					color = ResultFont.getGreen();
-				}else{
+				}else if((set.getString("STATUSINVOICEEN").trim().equals("CANCELLED"))||(set.getString("STATUSINVOICEEN").trim().equals("ON_AGREEMENT_CANCELLED"))){
+					statusRu = "Аннулирован";
+					color = ResultFont.getBlack();
+				}
+				else{
 					statusRu = "Не подписан";
 					color = ResultFont.getRed();
 				}

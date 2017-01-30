@@ -19,4 +19,8 @@ public class ResultFont {
 	public static Color getGreen(){
 		return new Color(0,176,0);
 	}
+	
+	public static Color getBlack(){
+		return new Color(0,0,0);
+	}
 }
