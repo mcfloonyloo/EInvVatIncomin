@@ -67,7 +67,7 @@ public class MainFrame extends JFrame{
 	
 	private JComboBox<String> yearComboBox;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.4";
+	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.5";
 	
 	static{
 		ApplicationProperties.getInstance();	
@@ -95,6 +95,7 @@ public class MainFrame extends JFrame{
 			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			if(chooser.showDialog(null,"Сохранить файл") == JFileChooser.APPROVE_OPTION){
 				ApplicationProperties.getInstance().setDbPath(chooser.getSelectedFile().getAbsolutePath().trim());
+				ApplicationProperties.getInstance().saveProperties();
 				JOptionPane.showMessageDialog(null, "Новый путь к файлу базы данных записан в настройках программы."+System.lineSeparator()+
 						"Пожалуйста, повторно запустите программу","Информация",JOptionPane.INFORMATION_MESSAGE);
 			}

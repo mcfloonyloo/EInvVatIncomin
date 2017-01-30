@@ -145,35 +145,35 @@ public class WorkingIncomingTable {
 			statement.setString(1,  fields[0]);
 			statement.setString(2,  fields[1]);
 			statement.setString(3,  fields[2]);
-			statement.setString(4,  fields[8]);
-			statement.setString(5,  fields[9]);
-			statement.setString(6,  fields[10]);
-			statement.setString(7, Status.valueRuOf(fields[10]));
-			if(fields[11].trim().length() > 0){
-				statement.setString(8,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[11])));
-			}else{
-				statement.setString(8,  fields[11]);
-			}
-			if(fields[12].trim().length() > 0){
-				statement.setString(9,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[12])));
-			}else{
-				statement.setString(9,  fields[12]);
-			}
+			statement.setString(4,  fields[10]);
+			statement.setString(5,  fields[11]);
+			statement.setString(6,  fields[12]);
+			statement.setString(7, Status.valueRuOf(fields[12]));
 			if(fields[13].trim().length() > 0){
-				statement.setString(10,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[13])));
+				statement.setString(8,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[13])));
 			}else{
-				statement.setString(10,  fields[13]);
+				statement.setString(8,  fields[13]);
 			}
-			statement.setString(11, fields[14]);
+			if(fields[14].trim().length() > 0){
+				statement.setString(9,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[14])));
+			}else{
+				statement.setString(9,  fields[14]);
+			}
 			if(fields[15].trim().length() > 0){
-				statement.setString(12,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[15])));
+				statement.setString(10,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[15])));
 			}else{
-				statement.setString(12,  fields[15]);
+				statement.setString(10,  fields[15]);
 			}
-			statement.setString(13, fields[16].replace(",", "."));
-			statement.setString(14, fields[17].replace(",", "."));
-			statement.setString(15, fields[18].replace(",", "."));
-			statement.setString(16, String.format("%.3f",(Float.parseFloat(fields[18].replace(",", "."))-Float.parseFloat(fields[17].replace(",", "."))-Float.parseFloat(fields[16].replace(",", ".")))));
+			statement.setString(11, fields[16]);
+			if(fields[17].trim().length() > 0){
+				statement.setString(12,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[17])));
+			}else{
+				statement.setString(12,  fields[17]);
+			}
+			statement.setString(13, fields[18].replace(",", "."));
+			statement.setString(14, fields[19].replace(",", "."));
+			statement.setString(15, fields[20].replace(",", "."));
+			statement.setString(16, String.format("%.3f",(Float.parseFloat(fields[20].replace(",", "."))-Float.parseFloat(fields[19].replace(",", "."))-Float.parseFloat(fields[18].replace(",", ".")))));
 			statement.executeUpdate();
 			result = true;
 			return result;		
