@@ -229,7 +229,7 @@ public class ReportOneDayFrame extends JFrame {
 		titleList.setFont(new Font("Courier New", Font.BOLD, 11));
 		titleList.setModel(new AbstractListModel<String>() {
 			private static final long serialVersionUID = 1L;
-			String[] values = new String[] {"   смо   ;    дюрю   ;         мнлеп щявт       ;   ярюрся   ;   аег мдя  ;     мдя    ;    бяецн"};
+			String[] values = new String[] {"    смо   ;    дюрю   ;         мнлеп щявт       ;   ярюрся   ;   аег мдя  ;     мдя    ;    бяецн"};
 			public int getSize() {
 				return values.length;
 			}

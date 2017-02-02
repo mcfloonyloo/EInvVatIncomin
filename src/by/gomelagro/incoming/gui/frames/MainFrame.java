@@ -67,7 +67,7 @@ public class MainFrame extends JFrame{
 	
 	private JComboBox<String> yearComboBox;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.6";
+	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.7";
 	
 	static{
 		ApplicationProperties.getInstance();	
