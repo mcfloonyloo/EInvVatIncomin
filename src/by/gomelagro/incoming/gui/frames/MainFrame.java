@@ -74,7 +74,7 @@ public class MainFrame extends JFrame{
 	
 	private MonthPanelListModel model;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.5.0";
+	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.5.1";
 	
 	static{
 		ApplicationProperties.getInstance();	

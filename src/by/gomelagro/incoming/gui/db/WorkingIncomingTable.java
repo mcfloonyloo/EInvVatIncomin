@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -124,7 +125,7 @@ public class WorkingIncomingTable {
 	
 
 	//
-	//количество подписанных ЭСЧФ в таблице за год
+	//количество подписанных ЭСЧФ в таблице за месяц года
 	public static int getCountCompletedInMonthYear(String month, String year){
 		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED_SIGNED' AND strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
@@ -139,7 +140,7 @@ public class WorkingIncomingTable {
 	}
 	
 	
-	//количество неподписанных ЭСЧФ в таблице за год
+	//количество неподписанных ЭСЧФ в таблице за месяц года
 	public static int getCountUncompletedInMonthYear(String month, String year){
 		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED' AND strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
@@ -153,7 +154,7 @@ public class WorkingIncomingTable {
 		}
 	}
 	
-	//количество отменённых ЭСЧФ за год
+	//количество отменённых ЭСЧФ за месяц года
 	public static int getCountCancelledInMonthYear(String month, String year){
 		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'CANCELLED' OR STATUSINVOICEEN = 'ON_AGREEMENT_CANCEL') AND strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
@@ -167,7 +168,7 @@ public class WorkingIncomingTable {
 		}
 	}
 	
-	//количество ЭСЧФ неопределенного статуса в таблице  за год
+	//количество ЭСЧФ неопределенного статуса в таблице за месяц года
 	public static int getCountUndeterminedInMonthYear(String month, String year){
 		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'ON_AGREEMENT' OR "
 				+ "STATUSINVOICEEN = 'IN_PROGRESS' OR STATUSINVOICEEN = 'NOT_FOUND' OR STATUSINVOICEEN = 'ERROR') AND strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
@@ -274,7 +275,8 @@ public class WorkingIncomingTable {
 				
 				list.add(new UnloadedInvoice.Builder()
 						.setUnp(set.getString("UNP").trim())
-						.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateSmallDash(set.getString("DATECOMMISSION").trim())))
+						//.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateSmallDash(set.getString("DATECOMMISSION").trim())))
+						.setDateCommission(new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim()))))
 						.setNumberInvoice(set.getString("NUMBERINVOICE").trim())
 						.setStatusInvoiceRu(statusRu)
 						.setTotalCost(set.getString("TOTALCOST").trim())
@@ -292,7 +294,7 @@ public class WorkingIncomingTable {
 	//список ЭСЧФ для отчета на дату
 	public static List<UnloadedInvoice> selectSignedNumbersInvoiceAtDate(Date date, Comparator<UnloadedInvoice> comparator, String status){
 		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
-		String sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATECOMMISSION = '"+date.toString()+"' "+status;
+		String sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATECOMMISSION = '"+date.toString()+"' "+status+" ORDER BY strftime('%Y',DATECOMMISSION), DATE(DATECOMMISSION)";
 		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 			list.clear();
 			ResultSet set = statement.executeQuery(sql);
@@ -312,7 +314,8 @@ public class WorkingIncomingTable {
 				}
 				list.add(new UnloadedInvoice.Builder()
 						.setUnp(set.getString("UNP").trim())
-						.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim())))
+						//.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim())))
+						.setDateCommission(new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim()))))
 						.setNumberInvoice(set.getString("NUMBERINVOICE").trim())
 						.setStatusInvoiceRu(statusRu)
 						.setTotalCost(set.getString("TOTALCOST").trim())
@@ -352,7 +355,8 @@ public class WorkingIncomingTable {
 				}
 				list.add(new UnloadedInvoice.Builder()
 						.setUnp(set.getString("UNP").trim())
-						.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim())))
+						//.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim())))
+						.setDateCommission(new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim()))))
 						.setNumberInvoice(set.getString("NUMBERINVOICE").trim())
 						.setStatusInvoiceRu(statusRu)
 						.setTotalCost(set.getString("TOTALCOST").trim())

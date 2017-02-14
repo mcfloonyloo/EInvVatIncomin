@@ -214,7 +214,6 @@ public class ReportOneDayFrame extends JFrame {
 		
 		sortedComboBox = new JComboBox<ResultSortComboBoxItem>();
 		sortedComboBox.addItem(new ResultSortComboBoxItem("УНП",UnloadedInvoiceComparators.compareToUnp));
-		sortedComboBox.addItem(new ResultSortComboBoxItem("Дата совершения",UnloadedInvoiceComparators.compareToDate));
 		sortedComboBox.addItem(new ResultSortComboBoxItem("Статус",UnloadedInvoiceComparators.compareToStatus));
 		GridBagConstraints gbc_sortedComboBox = new GridBagConstraints();
 		gbc_sortedComboBox.gridwidth = 2;

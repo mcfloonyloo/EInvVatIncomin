@@ -1,10 +1,12 @@
 package by.gomelagro.incoming.gui.db.files.data;
 
 import java.awt.Color;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class UnloadedInvoice {
 	private String unp;
-	private String dateCommission;
+	private Date dateCommission;
 	private String numberInvoice;
 	private String statusinvoiceRu;
 	private String totalCost;
@@ -13,7 +15,7 @@ public class UnloadedInvoice {
 	private Color color;
 	
 	public String getUnp(){return this.unp;}
-	public String getDateCommission(){return this.dateCommission;}
+	public Date getDateCommission(){return this.dateCommission;}
 	public String getNumberInvoice(){return this.numberInvoice;}
 	public String getStatusInvoice(){return this.statusinvoiceRu;}
 	public String getTotalCost(){return this.totalCost;}
@@ -34,7 +36,7 @@ public class UnloadedInvoice {
 	
 	public static class Builder{
 		private String unp = "";
-		private String dateCommission = "";
+		private Date dateCommission = null;
 		private String numberInvoice = "";
 		private String statusinvoiceRu = "";
 		private String totalCost = "";
@@ -49,7 +51,7 @@ public class UnloadedInvoice {
 			return this;
 		}
 		
-		public Builder setDateCommission(String dateCommission){
+		public Builder setDateCommission(Date dateCommission){
 			this.dateCommission = dateCommission;
 			return this;
 		}
@@ -90,10 +92,10 @@ public class UnloadedInvoice {
 	}
 	
 	public String toTrimString(){
-		return getUnp()+";"+getDateCommission()+";"+getNumberInvoice()+";"+getStatusInvoice()+";"+String.format("%.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%.3f",Float.parseFloat(getTotalAll()));
+		return getUnp()+";"+new SimpleDateFormat("dd.MM.yyyy").format(getDateCommission())+";"+getNumberInvoice()+";"+getStatusInvoice()+";"+String.format("%.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%.3f",Float.parseFloat(getTotalAll()));
 	}
 	
 	public String toString(){
-		return String.format("%10s", getUnp())+";"+String.format("%11s", getDateCommission())+";"+String.format("%26s",getNumberInvoice())+";"+String.format("%12s", getStatusInvoice())+";"+String.format("%12.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%12.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%12.3f",Float.parseFloat(getTotalAll()));
+		return String.format("%10s", getUnp())+"; "+new SimpleDateFormat("dd.MM.yyyy").format(getDateCommission())+";"+String.format("%26s",getNumberInvoice())+";"+String.format("%12s", getStatusInvoice())+";"+String.format("%12.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%12.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%12.3f",Float.parseFloat(getTotalAll()));
 	}
 }
