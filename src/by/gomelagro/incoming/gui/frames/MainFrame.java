@@ -13,7 +13,6 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
 
-import javax.swing.AbstractListModel;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
@@ -34,15 +33,21 @@ import javax.swing.SwingWorker;
 import javax.swing.border.BevelBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import by.gomelagro.incoming.format.date.InvoiceDateFormat;
 import by.gomelagro.incoming.gui.console.JConsole;
 import by.gomelagro.incoming.gui.db.ConnectionDB;
 import by.gomelagro.incoming.gui.db.WorkingIncomingTable;
 import by.gomelagro.incoming.gui.db.files.WorkingFiles;
 import by.gomelagro.incoming.gui.frames.enstatus.UpdateEnStatus;
+import by.gomelagro.incoming.gui.frames.list.JMonthPanel;
+import by.gomelagro.incoming.gui.frames.list.MonthPanelListModel;
+import by.gomelagro.incoming.gui.frames.list.MonthYearItem;
+import by.gomelagro.incoming.gui.frames.list.renderer.MonthPanelCellListRenderer;
 import by.gomelagro.incoming.gui.progress.LoadFileProgressBar;
 import by.gomelagro.incoming.properties.ApplicationProperties;
 import by.gomelagro.incoming.service.EVatServiceSingleton;
 import by.gomelagro.incoming.service.certificate.Certificate;
+import javax.swing.ListSelectionModel;
 
 public class MainFrame extends JFrame{
 
@@ -61,13 +66,15 @@ public class MainFrame extends JFrame{
 	
 	private JLabel allInvoicesLabel;
 	private JLabel completedLabel;
-	private JLabel noCompletedLabel;
+	private JLabel uncompletedLabel;
 	private JLabel cancelledLabel;
 	private JLabel undeterminedLabel;
 	
 	private JComboBox<String> yearComboBox;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.4.7";
+	private MonthPanelListModel model;
+	
+	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.5.0";
 	
 	static{
 		ApplicationProperties.getInstance();	
@@ -80,6 +87,7 @@ public class MainFrame extends JFrame{
 	 * Create the application.
 	 */
 	public MainFrame() {
+		//initialize();
 		if(WorkingFiles.isFile(ApplicationProperties.getInstance().getDbPath())){
 			initialize();
 			if(WorkingIncomingTable.getCountAll() > 0)
@@ -113,11 +121,11 @@ public class MainFrame extends JFrame{
 		}
 		setTitle(title);
 		setResizable(false);
-		setBounds(100, 100, 1065, 630);
+		setBounds(100, 100, 920, 650);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 0};
-		gridBagLayout.rowHeights = new int[]{400, 129, 0};
+		gridBagLayout.rowHeights = new int[]{480, 129, 0};
 		gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
 		gridBagLayout.rowWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
 		getContentPane().setLayout(gridBagLayout);
@@ -131,8 +139,8 @@ public class MainFrame extends JFrame{
 		gbc_mainPanel.gridy = 0;
 		getContentPane().add(mainPanel, gbc_mainPanel);
 		GridBagLayout gbl_mainPanel = new GridBagLayout();
-		gbl_mainPanel.columnWidths = new int[]{20, 20, 0, 60, 70, 0, 0};
-		gbl_mainPanel.rowHeights = new int[]{20, 20, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_mainPanel.columnWidths = new int[]{20, 20, 0, 60, 70, 500, 0};
+		gbl_mainPanel.rowHeights = new int[]{20, 20, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 0};
 		gbl_mainPanel.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		gbl_mainPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		mainPanel.setLayout(gbl_mainPanel);
@@ -171,37 +179,24 @@ public class MainFrame extends JFrame{
 		gbc_yearComboBox.gridy = 1;
 		mainPanel.add(yearComboBox, gbc_yearComboBox);
 		
-		JList<String> titleList = new JList<String>();
-		titleList.setEnabled(false);
-		titleList.setFont(new Font("Courier New", Font.PLAIN, 11));
-		titleList.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
-		titleList.setModel(new AbstractListModel<String>() {
-			private static final long serialVersionUID = 1L;
-			String[] values = new String[] {"[ЗАГОЛОВОК СПИСКА СТРОКИ, СОДЕРЖАЩЕЙ СВЕДЕНИЯ ОБ ЭСЧФ И НДС ПО МЕСЯЦАМ ВЫБРАННОГО ГОДА]"};
-			public int getSize() {
-				return values.length;
-			}
-			public String getElementAt(int index) {
-				return values[index];
-			}
-		});
-		GridBagConstraints gbc_titleList = new GridBagConstraints();
-		gbc_titleList.anchor = GridBagConstraints.SOUTH;
-		gbc_titleList.insets = new Insets(0, 0, 5, 0);
-		gbc_titleList.fill = GridBagConstraints.HORIZONTAL;
-		gbc_titleList.gridx = 5;
-		gbc_titleList.gridy = 1;
-		mainPanel.add(titleList, gbc_titleList);
+		model = new MonthPanelListModel();
 		
-		JList<String> vatList = new JList<String>();
+		JList<JMonthPanel> vatList = new JList<JMonthPanel>();
+		vatList.setValueIsAdjusting(true);
+		vatList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		vatList.setCellRenderer(new MonthPanelCellListRenderer());
+		JScrollPane scroll_vatList = new JScrollPane(vatList);
+		scroll_vatList.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		scroll_vatList	.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		vatList.setModel(model);
 		vatList.setFont(new Font("Courier New", Font.PLAIN, 11));
 		vatList.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
 		GridBagConstraints gbc_vatList = new GridBagConstraints();
-		gbc_vatList.gridheight = 12;
+		gbc_vatList.gridheight = 13;
 		gbc_vatList.fill = GridBagConstraints.BOTH;
 		gbc_vatList.gridx = 5;
-		gbc_vatList.gridy = 2;
-		mainPanel.add(vatList, gbc_vatList);
+		gbc_vatList.gridy = 1;
+		mainPanel.add(scroll_vatList, gbc_vatList);
 		
 		JLabel lblAllInvoicesLabel = new JLabel("Всего ЭСЧФ: ");
 		lblAllInvoicesLabel.setFont(new Font("Courier New", Font.PLAIN, 11));
@@ -250,23 +245,23 @@ public class MainFrame extends JFrame{
 		gbc_completedLabel.gridy = 4;
 		mainPanel.add(completedLabel, gbc_completedLabel);
 		
-		JLabel lblNoCompletedLabel = new JLabel("не подписаны: ");
-		lblNoCompletedLabel.setFont(new Font("Courier New", Font.PLAIN, 11));
-		GridBagConstraints gbc_lblNoCompletedLabel = new GridBagConstraints();
-		gbc_lblNoCompletedLabel.anchor = GridBagConstraints.WEST;
-		gbc_lblNoCompletedLabel.insets = new Insets(0, 0, 5, 5);
-		gbc_lblNoCompletedLabel.gridx = 2;
-		gbc_lblNoCompletedLabel.gridy = 5;
-		mainPanel.add(lblNoCompletedLabel, gbc_lblNoCompletedLabel);
+		JLabel UncompletedLabel = new JLabel("не подписаны: ");
+		UncompletedLabel.setFont(new Font("Courier New", Font.PLAIN, 11));
+		GridBagConstraints gbc_UncompletedLabel = new GridBagConstraints();
+		gbc_UncompletedLabel.anchor = GridBagConstraints.WEST;
+		gbc_UncompletedLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_UncompletedLabel.gridx = 2;
+		gbc_UncompletedLabel.gridy = 5;
+		mainPanel.add(UncompletedLabel, gbc_UncompletedLabel);
 		
-		noCompletedLabel = new JLabel("");
-		noCompletedLabel.setFont(new Font("Courier New", Font.BOLD, 11));
-		GridBagConstraints gbc_noCompletedLabel = new GridBagConstraints();
-		gbc_noCompletedLabel.anchor = GridBagConstraints.EAST;
-		gbc_noCompletedLabel.insets = new Insets(0, 0, 5, 5);
-		gbc_noCompletedLabel.gridx = 3;
-		gbc_noCompletedLabel.gridy = 5;
-		mainPanel.add(noCompletedLabel, gbc_noCompletedLabel);
+		uncompletedLabel = new JLabel("");
+		uncompletedLabel.setFont(new Font("Courier New", Font.BOLD, 11));
+		GridBagConstraints gbc_uncompletedLabel = new GridBagConstraints();
+		gbc_uncompletedLabel.anchor = GridBagConstraints.EAST;
+		gbc_uncompletedLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_uncompletedLabel.gridx = 3;
+		gbc_uncompletedLabel.gridy = 5;
+		mainPanel.add(uncompletedLabel, gbc_uncompletedLabel);
 		
 		JLabel lblCancelledLabel = new JLabel("аннулированы: ");
 		lblCancelledLabel.setFont(new Font("Courier New", Font.PLAIN, 11));
@@ -473,14 +468,36 @@ public class MainFrame extends JFrame{
 	private void updateMainPanel(String year){
 		if(yearComboBox.getModel().getSize() > 0){
 			allInvoicesLabel.setText(String.valueOf(WorkingIncomingTable.getCountAllInYear(year)));
-			completedLabel.setText(String.valueOf(WorkingIncomingTable.getCountCompleted(year)));
-			noCompletedLabel.setText(String.valueOf(WorkingIncomingTable.getCountNoCompleted(year)));
-			cancelledLabel.setText(String.valueOf(WorkingIncomingTable.getCountCancelled(year)));
-			undeterminedLabel.setText(String.valueOf(WorkingIncomingTable.getCountUndetermined(year)));				
+			completedLabel.setText(String.valueOf(WorkingIncomingTable.getCountCompletedInYear(year)));
+			uncompletedLabel.setText(String.valueOf(WorkingIncomingTable.getCountUncompletedInYear(year)));
+			cancelledLabel.setText(String.valueOf(WorkingIncomingTable.getCountCancelledInYear(year)));
+			undeterminedLabel.setText(String.valueOf(WorkingIncomingTable.getCountUndeterminedInYear(year)));
+			
+			List<MonthYearItem> list = WorkingIncomingTable.selectMonthYear(year);
+			if(list != null){
+				model.clear();
+				for(int index=0;index<list.size();index++){
+					try {
+						model.addElement(
+								InvoiceDateFormat.string2DateReverseSmallDash(WorkingIncomingTable.getStartMonthOfDate(list.get(index).getMonth(), list.get(index).getYear())), 
+								InvoiceDateFormat.string2DateReverseSmallDash(WorkingIncomingTable.getEndMonthOfDate(list.get(index).getMonth(), list.get(index).getYear())),
+								WorkingIncomingTable.getCountCompletedInMonthYear(list.get(index).getMonth(), list.get(index).getYear()), 
+								WorkingIncomingTable.getCountUncompletedInMonthYear(list.get(index).getMonth(), list.get(index).getYear()), 
+								WorkingIncomingTable.getCountCancelledInMonthYear(list.get(index).getMonth(), list.get(index).getYear()), 
+								WorkingIncomingTable.getCountUndeterminedInMonthYear(list.get(index).getMonth(), list.get(index).getYear())
+						);
+
+					} catch (ParseException e) {
+						System.err.println("Record "+list.get(index).getMonth()+"-"+list.get(index).getYear()+": "+e.getLocalizedMessage());
+					}
+				}
+			}else{
+				JOptionPane.showMessageDialog(null, "Невозможно обработать пустой список","Внимание",JOptionPane.WARNING_MESSAGE);
+			}
 		}else{
 			allInvoicesLabel.setText("0");
 			completedLabel.setText("0");
-			noCompletedLabel.setText("0");
+			uncompletedLabel.setText("0");
 			cancelledLabel.setText("0");
 			undeterminedLabel.setText("0");
 		}

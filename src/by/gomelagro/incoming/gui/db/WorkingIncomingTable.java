@@ -16,6 +16,7 @@ import javax.swing.JOptionPane;
 
 import by.gomelagro.incoming.format.date.InvoiceDateFormat;
 import by.gomelagro.incoming.gui.db.files.data.UnloadedInvoice;
+import by.gomelagro.incoming.gui.frames.list.MonthYearItem;
 import by.gomelagro.incoming.gui.frames.report.ResultFont;
 import by.gomelagro.incoming.status.Status;
 
@@ -28,9 +29,7 @@ public class WorkingIncomingTable {
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 			int count = -1;
 			ResultSet set = statement.executeQuery();
-			while(set.next()){
-				count = set.getInt(1);
-			}
+			while(set.next()){count = set.getInt(1);}
 			return count;
 		} catch (SQLException e) {
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
@@ -44,9 +43,7 @@ public class WorkingIncomingTable {
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 			int count = -1;
 			ResultSet set = statement.executeQuery();
-			while(set.next()){
-				count = set.getInt(1);
-			}
+			while(set.next()){count = set.getInt(1);}
 			return count;
 		} catch (SQLException e) {
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
@@ -55,14 +52,12 @@ public class WorkingIncomingTable {
 	}	
 	
 	//количество всех Ё—„‘ в таблице за год
-	public static int getCountAllInYear(String date){
-		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+	public static int getCountAllInYear(String year){
+		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND strftime('%Y',DATECOMMISSION) = '"+year+"'";
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 			int count = -1;
 			ResultSet set = statement.executeQuery();
-			while(set.next()){
-				count = set.getInt(1);
-			}
+			while(set.next()){count = set.getInt(1);}
 			return count;
 		} catch (SQLException e) {
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
@@ -70,15 +65,13 @@ public class WorkingIncomingTable {
 		}
 	}
 	
-	//количество подписанных Ё—„‘ в таблице
-	public static int getCountCompleted(String date){
-		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED_SIGNED' AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+	//количество подписанных Ё—„‘ в таблице за год
+	public static int getCountCompletedInYear(String year){
+		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED_SIGNED' AND strftime('%Y',DATECOMMISSION) = '"+year+"'";
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 			int count = -1;
 			ResultSet set = statement.executeQuery();
-			while(set.next()){
-				count = set.getInt(1);
-			}
+			while(set.next()){count = set.getInt(1);}
 			return count;
 		} catch (SQLException e) {
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
@@ -86,16 +79,13 @@ public class WorkingIncomingTable {
 		}
 	}
 	
-	
-	//количество неподписанных Ё—„‘ в таблице
-	public static int getCountNoCompleted(String date){
-		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED' AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+	//количество неподписанных Ё—„‘ в таблице за год
+	public static int getCountUncompletedInYear(String year){
+		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED' AND strftime('%Y',DATECOMMISSION) = '"+year+"'";
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 			int count = -1;
 			ResultSet set = statement.executeQuery();
-			while(set.next()){
-				count = set.getInt(1);
-			}
+			while(set.next()){count = set.getInt(1);}
 			return count;
 		} catch (SQLException e) {
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
@@ -103,15 +93,13 @@ public class WorkingIncomingTable {
 		}
 	}
 	
-	//количество отменЄнных Ё—„‘
-	public static int getCountCancelled(String date){
-		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'CANCELLED' OR STATUSINVOICEEN = 'ON_AGREEMENT_CANCEL') AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+	//количество отменЄнных Ё—„‘ за год
+	public static int getCountCancelledInYear(String year){
+		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'CANCELLED' OR STATUSINVOICEEN = 'ON_AGREEMENT_CANCEL') AND strftime('%Y',DATECOMMISSION) = '"+year+"'";
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 			int count = -1;
 			ResultSet set = statement.executeQuery();
-			while(set.next()){
-				count = set.getInt(1);
-			}
+			while(set.next()){count = set.getInt(1);}
 			return count;
 		} catch (SQLException e) {
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
@@ -119,22 +107,81 @@ public class WorkingIncomingTable {
 		}
 	}
 	
-	//количество Ё—„‘ неопределенного статуса в таблице 
-	public static int getCountUndetermined(String date){
+	//количество Ё—„‘ неопределенного статуса в таблице  за год
+	public static int getCountUndeterminedInYear(String year){
 		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'ON_AGREEMENT' OR "
-				+ "STATUSINVOICEEN = 'IN_PROGRESS' OR STATUSINVOICEEN = 'NOT_FOUND' OR STATUSINVOICEEN = 'ERROR') AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+				+ "STATUSINVOICEEN = 'IN_PROGRESS' OR STATUSINVOICEEN = 'NOT_FOUND' OR STATUSINVOICEEN = 'ERROR') AND strftime('%Y',DATECOMMISSION) = '"+year+"'";
 		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 			int count = -1;
 			ResultSet set = statement.executeQuery();
-			while(set.next()){
-				count = set.getInt(1);
-			}
+			while(set.next()){count = set.getInt(1);}
 			return count;
 		} catch (SQLException e) {
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
 			return -1;
 		}
 	}
+	
+
+	//
+	//количество подписанных Ё—„‘ в таблице за год
+	public static int getCountCompletedInMonthYear(String month, String year){
+		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED_SIGNED' AND strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
+		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+			int count = -1;
+			ResultSet set = statement.executeQuery();
+			while(set.next()){count = set.getInt(1);}
+			return count;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
+			return -1;
+		}
+	}
+	
+	
+	//количество неподписанных Ё—„‘ в таблице за год
+	public static int getCountUncompletedInMonthYear(String month, String year){
+		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED' AND strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
+		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+			int count = -1;
+			ResultSet set = statement.executeQuery();
+			while(set.next()){count = set.getInt(1);}
+			return count;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
+			return -1;
+		}
+	}
+	
+	//количество отменЄнных Ё—„‘ за год
+	public static int getCountCancelledInMonthYear(String month, String year){
+		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'CANCELLED' OR STATUSINVOICEEN = 'ON_AGREEMENT_CANCEL') AND strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
+		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+			int count = -1;
+			ResultSet set = statement.executeQuery();
+			while(set.next()){count = set.getInt(1);}
+				return count;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
+			return -1;
+		}
+	}
+	
+	//количество Ё—„‘ неопределенного статуса в таблице  за год
+	public static int getCountUndeterminedInMonthYear(String month, String year){
+		String sql = "SELECT COUNT(*) AS COUNT FROM INCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'ON_AGREEMENT' OR "
+				+ "STATUSINVOICEEN = 'IN_PROGRESS' OR STATUSINVOICEEN = 'NOT_FOUND' OR STATUSINVOICEEN = 'ERROR') AND strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
+		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+			int count = -1;
+			ResultSet set = statement.executeQuery();
+			while(set.next()){count = set.getInt(1);}
+			return count;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
+			return -1;
+		}
+	}	
+	//	
 	
 	//добавление Ё—„‘
 	public static boolean insertIncoming(String[] fields) throws SQLException, ParseException{
@@ -186,9 +233,7 @@ public class WorkingIncomingTable {
 		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 			list.clear();
 			ResultSet set = statement.executeQuery(sql);
-			while(set.next()){
-				list.add(set.getString(1).trim());
-			}
+			while(set.next()){list.add(set.getString(1).trim());}
 			return list;
 		} catch (SQLException e) {
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
@@ -204,9 +249,7 @@ public class WorkingIncomingTable {
 		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 			list.clear();
 			ResultSet set = statement.executeQuery(sql);
-			while(set.next()){
-				list.add(set.getString(1).trim());
-			}
+			while(set.next()){list.add(set.getString(1).trim());}
 			return list;
 		} catch (SQLException e) {
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
@@ -333,15 +376,26 @@ public class WorkingIncomingTable {
 		String sql = "SELECT strftime('%Y',DATECOMMISSION) as cYEAR FROM INCOMING GROUP BY cYEAR ORDER BY cYEAR";
 		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 			ResultSet set = statement.executeQuery(sql);
-			while(set.next()){
-				list.add(set.getString("cYEAR"));
-			}
+			while(set.next()){list.add(set.getString("cYEAR"));}
 			return list;
 		}catch(SQLException e){
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
 			return null;
 		}
-		
+	}
+	
+	//список мес€цев из года на основе таблицы 
+	public static List<String> selectMonthInvoiceOfYear(String year){
+		List<String> list = new ArrayList<String>();
+		String sql = "SELECT strftime('%m',DATECOMMISSION) AS cMONTH FROM INCOMING GROUP BY cMonth HAVING strftime('%Y',DATECOMMISSION) ='"+year.trim()+"'";
+		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
+			ResultSet set = statement.executeQuery(sql);
+			while(set.next()){list.add(set.getString("cMONTH"));}
+			return list;
+		}catch(SQLException e){
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
+			return null;
+		}
 	}
 
 	//обновление статусов Ё—„‘
@@ -368,5 +422,48 @@ public class WorkingIncomingTable {
 		result = true;
 		return result;
 	}
+	
+	//получение списка пар √од-ћес€ц 
+	public static List<MonthYearItem> selectMonthYear(String year){
+		List<MonthYearItem> list = new ArrayList<MonthYearItem>();
+		String sql = "SELECT strftime('%Y',DATECOMMISSION) as cYEAR, strftime('%m',DATECOMMISSION) as cMONTH FROM INCOMING GROUP BY cYEAR, cMONTH HAVING cYEAR = '"+year+"'";
+		try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
+			ResultSet set = statement.executeQuery(sql);
+			while(set.next()){list.add(new MonthYearItem.Builder().setYear(set.getString("cYEAR")).setMonth(set.getString("cMONTH")).build());}
+			return list;
+		}catch(SQLException e){
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
+			return null;
+		}
+	}
+	
+	//получение даты начала мес€ца
+	public static String getStartMonthOfDate(String month, String year){
+		String sql = "SELECT date(DATECOMMISSION,'start of month') AS startMonth FROM INCOMING GROUP BY date(DATECOMMISSION,'start of month') HAVING strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
+		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+			String start = "";
+			ResultSet set = statement.executeQuery();
+			while(set.next()){start = set.getString("startMonth");}
+			return start;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
+			return "01.01.1999";
+		}
+	}
+	
+	//получение даты конца мес€ца
+	public static String getEndMonthOfDate(String month, String year){
+		String sql = "SELECT date(DATECOMMISSION,'start of month','+1 month','-1 day') AS endMonth FROM INCOMING GROUP BY date(DATECOMMISSION,'start of month') HAVING strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
+		try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+			String start = "";
+			ResultSet set = statement.executeQuery();
+			while(set.next()){start = set.getString("endMonth");}
+			return start;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"ќшибка",JOptionPane.ERROR_MESSAGE);
+			return "31.01.1999";
+		}
+	}
+	
 	
 }
