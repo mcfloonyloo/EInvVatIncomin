@@ -1,6 +1,7 @@
 package by.gomelagro.incoming.gui.db.files.data;
 
 import java.awt.Color;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -12,6 +13,7 @@ public class UnloadedInvoice {
 	private String totalCost;
 	private String totalVat;
 	private String totalAll;
+	private String dateDocument;
 	private Color color;
 	
 	public String getUnp(){return this.unp;}
@@ -21,6 +23,7 @@ public class UnloadedInvoice {
 	public String getTotalCost(){return this.totalCost;}
 	public String getTotalVat(){return this.totalVat;}
 	public String getTotalAll(){return this.totalAll;}
+	public String getDateDocument(){return this.dateDocument;}
 	public Color getColor(){return this.color;}
 	
 	private UnloadedInvoice(Builder builder){
@@ -31,6 +34,7 @@ public class UnloadedInvoice {
 		this.totalCost = builder.totalCost;
 		this.totalVat = builder.totalVat;
 		this.totalAll = builder.totalAll;	
+		this.dateDocument = builder.dateDocument;
 		this.color = builder.color;
 	}
 	
@@ -42,6 +46,7 @@ public class UnloadedInvoice {
 		private String totalCost = "";
 		private String totalVat = "";
 		private String totalAll = "";
+		private String dateDocument = "";
 		private Color color = Color.BLACK;
 		
 		public Builder(){}
@@ -81,6 +86,11 @@ public class UnloadedInvoice {
 			return this;
 		}
 		
+		public Builder setDateDocument(String dateDocument){
+			this.dateDocument = dateDocument;
+			return this;
+		}
+		
 		public Builder setColor(Color color){
 			this.color = color;
 			return this;
@@ -91,11 +101,30 @@ public class UnloadedInvoice {
 		}
 	}
 	
+	public Date getFormattedDateDocument(){
+		Date date;
+		try {
+			date = new SimpleDateFormat("dd.MM.yyyy").parse(getDateDocument());
+		} catch (ParseException e) {
+			date = null;
+		}
+		return date;
+	}
+	
 	public String toTrimString(){
-		return getUnp()+";"+new SimpleDateFormat("dd.MM.yyyy").format(getDateCommission())+";"+getNumberInvoice()+";"+getStatusInvoice()+";"+String.format("%.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%.3f",Float.parseFloat(getTotalAll()));
+		if(getDateDocument().isEmpty()){
+			return getUnp()+";"+new SimpleDateFormat("dd.MM.yyyy").format(getDateCommission())+";"+getNumberInvoice()+";"+getStatusInvoice()+";"+String.format("%.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%.3f",Float.parseFloat(getTotalAll()))+";";
+		}else{
+			return getUnp()+";"+new SimpleDateFormat("dd.MM.yyyy").format(getDateCommission())+";"+getNumberInvoice()+";"+getStatusInvoice()+";"+String.format("%.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%.3f",Float.parseFloat(getTotalAll()))+";"+new SimpleDateFormat("dd.MM.yyyy").format(getFormattedDateDocument());
+		}
+		
 	}
 	
 	public String toString(){
-		return String.format("%10s", getUnp())+"; "+new SimpleDateFormat("dd.MM.yyyy").format(getDateCommission())+";"+String.format("%26s",getNumberInvoice())+";"+String.format("%12s", getStatusInvoice())+";"+String.format("%12.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%12.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%12.3f",Float.parseFloat(getTotalAll()));
+		if(getDateDocument().isEmpty()){
+			return String.format("%10s", getUnp())+"; "+new SimpleDateFormat("dd.MM.yyyy").format(getDateCommission())+";"+String.format("%26s",getNumberInvoice())+";"+String.format("%12s", getStatusInvoice())+";"+String.format("%12.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%12.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%12.3f",Float.parseFloat(getTotalAll()))+";";
+		}else{
+			return String.format("%10s", getUnp())+"; "+new SimpleDateFormat("dd.MM.yyyy").format(getDateCommission())+";"+String.format("%26s",getNumberInvoice())+";"+String.format("%12s", getStatusInvoice())+";"+String.format("%12.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%12.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%12.3f",Float.parseFloat(getTotalAll()))+"; "+String.format("%14s", new SimpleDateFormat("dd.MM.yyyy").format(getFormattedDateDocument()));
+		}
 	}
 }

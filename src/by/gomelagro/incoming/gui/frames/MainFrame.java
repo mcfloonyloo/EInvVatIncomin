@@ -74,7 +74,7 @@ public class MainFrame extends JFrame{
 	
 	private MonthPanelListModel model;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.5.1";
+	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.6.0";
 	
 	static{
 		ApplicationProperties.getInstance();	
@@ -401,7 +401,7 @@ public class MainFrame extends JFrame{
 				}
 			}
 		});
-		loadFileMenuItem.setEnabled(false);
+		//loadFileMenuItem.setEnabled(false);
 		listMenu.add(loadFileMenuItem);
 		
 		JSeparator upListSeparator = new JSeparator();
@@ -608,7 +608,7 @@ public class MainFrame extends JFrame{
 						}
 						try{
 							for(int index=0; index<lines.size();index++){
-								String[] fields = lines.get(index).split(";");								
+								String[] fields = lines.get(index).split(";",28);								
 								if(fields[0].trim().equals(unp)){//изменить на чтение сертификата
 								//if(fields[0].trim().equals("400047886")){
 									System.out.println("Запись "+(index+1)+": Попытка чтения записи исходящей ЭСЧФ из файла");

@@ -86,7 +86,7 @@ public class ReportOneDayFrame extends JFrame {
 		setTitle("нРВЕР ОН щявт ГЮ НДХМ ДЕМЭ");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setResizable(false);
-		setBounds(100, 100, 800, 520);
+		setBounds(100, 100, 920, 520);
 		
 		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
@@ -228,7 +228,7 @@ public class ReportOneDayFrame extends JFrame {
 		titleList.setFont(new Font("Courier New", Font.BOLD, 11));
 		titleList.setModel(new AbstractListModel<String>() {
 			private static final long serialVersionUID = 1L;
-			String[] values = new String[] {"    смо   ;    дюрю   ;         мнлеп щявт       ;   ярюрся   ;   аег мдя  ;     мдя    ;    бяецн"};
+			String[] values = new String[] {"    смо   ;    дюрю   ;         мнлеп щявт       ;   ярюрся   ;   аег мдя  ;     мдя    ;    бяецн   ; дюрю днйслемрю"};
 			public int getSize() {
 				return values.length;
 			}
