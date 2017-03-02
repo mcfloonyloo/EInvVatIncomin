@@ -26,13 +26,14 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
 import javax.swing.JTextPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingWorker;
 import javax.swing.border.BevelBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import by.gomelagro.incoming.base.ApplicationConstants;
 import by.gomelagro.incoming.format.date.InvoiceDateFormat;
 import by.gomelagro.incoming.gui.console.JConsole;
 import by.gomelagro.incoming.gui.db.ConnectionDB;
@@ -47,7 +48,6 @@ import by.gomelagro.incoming.gui.progress.LoadFileProgressBar;
 import by.gomelagro.incoming.properties.ApplicationProperties;
 import by.gomelagro.incoming.service.EVatServiceSingleton;
 import by.gomelagro.incoming.service.certificate.Certificate;
-import javax.swing.ListSelectionModel;
 
 public class MainFrame extends JFrame{
 
@@ -74,7 +74,7 @@ public class MainFrame extends JFrame{
 	
 	private MonthPanelListModel model;
 	
-	private final String title = "Приложение для обработки входящих ЭСЧФ v0.3.6.0";
+	private final String title = ApplicationConstants.APP_MAINFRAME_TITLE+" "+ApplicationConstants.APP_VERSION;
 	
 	static{
 		ApplicationProperties.getInstance();	
@@ -90,7 +90,7 @@ public class MainFrame extends JFrame{
 		//initialize();
 		if(WorkingFiles.isFile(ApplicationProperties.getInstance().getDbPath())){
 			initialize();
-			if(WorkingIncomingTable.getCountAll() > 0)
+			if(WorkingIncomingTable.Count.getCountAll() > 0)
 				updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
 			setVisible(true);
 		}else{
@@ -163,7 +163,7 @@ public class MainFrame extends JFrame{
 				}
 			}
 		});
-		if(WorkingIncomingTable.getCountAll() > 0){
+		if(WorkingIncomingTable.Count.getCountAll() > 0){
 			if(fillYear()){
 				yearComboBox.setSelectedIndex(0);
 			}else{
@@ -338,8 +338,7 @@ public class MainFrame extends JFrame{
 		infoCertMenuItem.setEnabled(false);
 		fileMenu.add(infoCertMenuItem);
 		
-		JSeparator separator = new JSeparator();
-		fileMenu.add(separator);
+		fileMenu.addSeparator();
 		
 		connectMenuItem = new JMenuItem("Подключить");
 		connectMenuItem.addMouseListener(new MouseAdapter() {
@@ -364,8 +363,7 @@ public class MainFrame extends JFrame{
 		disconnectMenuItem.setEnabled(false);
 		fileMenu.add(disconnectMenuItem);
 		
-		JSeparator separatorUp = new JSeparator();
-		fileMenu.add(separatorUp);
+		fileMenu.addSeparator();
 		
 		JMenuItem Settings = new JMenuItem("Настройки");
 		Settings.addMouseListener(new MouseAdapter() {
@@ -376,8 +374,7 @@ public class MainFrame extends JFrame{
 		});
 		fileMenu.add(Settings);
 		
-		JSeparator separatorDown = new JSeparator();
-		fileMenu.add(separatorDown);
+		fileMenu.addSeparator();
 		
 		JMenuItem exitMenuItem = new JMenuItem("Выход");
 		exitMenuItem.addMouseListener(new MouseAdapter() {
@@ -401,11 +398,10 @@ public class MainFrame extends JFrame{
 				}
 			}
 		});
-		//loadFileMenuItem.setEnabled(false);
+		loadFileMenuItem.setEnabled(false);
 		listMenu.add(loadFileMenuItem);
 		
-		JSeparator upListSeparator = new JSeparator();
-		listMenu.add(upListSeparator);
+		listMenu.addSeparator();
 		
 		updateStatusMenuItem = new JMenuItem("Полное обновление статусов");
 		updateStatusMenuItem.addMouseListener(new MouseAdapter(){
@@ -433,8 +429,7 @@ public class MainFrame extends JFrame{
 		fastUpdateStatusMenuItem.setEnabled(false);
 		listMenu.add(fastUpdateStatusMenuItem);
 		
-		JSeparator downListSeparator = new JSeparator();
-		listMenu.add(downListSeparator);
+		listMenu.addSeparator();
 		
 		JMenu saveMenu = new JMenu("Отчет по ЭСЧФ...");
 		listMenu.add(saveMenu);
@@ -467,24 +462,24 @@ public class MainFrame extends JFrame{
 	 */	
 	private void updateMainPanel(String year){
 		if(yearComboBox.getModel().getSize() > 0){
-			allInvoicesLabel.setText(String.valueOf(WorkingIncomingTable.getCountAllInYear(year)));
-			completedLabel.setText(String.valueOf(WorkingIncomingTable.getCountCompletedInYear(year)));
-			uncompletedLabel.setText(String.valueOf(WorkingIncomingTable.getCountUncompletedInYear(year)));
-			cancelledLabel.setText(String.valueOf(WorkingIncomingTable.getCountCancelledInYear(year)));
-			undeterminedLabel.setText(String.valueOf(WorkingIncomingTable.getCountUndeterminedInYear(year)));
+			allInvoicesLabel.setText(String.valueOf(WorkingIncomingTable.Count.getCountAllInYear(year)));
+			completedLabel.setText(String.valueOf(WorkingIncomingTable.Count.getCountCompletedInYear(year)));
+			uncompletedLabel.setText(String.valueOf(WorkingIncomingTable.Count.getCountUncompletedInYear(year)));
+			cancelledLabel.setText(String.valueOf(WorkingIncomingTable.Count.getCountCancelledInYear(year)));
+			undeterminedLabel.setText(String.valueOf(WorkingIncomingTable.Count.getCountUndeterminedInYear(year)));
 			
-			List<MonthYearItem> list = WorkingIncomingTable.selectMonthYear(year);
+			List<MonthYearItem> list = WorkingIncomingTable.Date.selectMonthYear(year);
 			if(list != null){
 				model.clear();
 				for(int index=0;index<list.size();index++){
 					try {
 						model.addElement(
-								InvoiceDateFormat.string2DateReverseSmallDash(WorkingIncomingTable.getStartMonthOfDate(list.get(index).getMonth(), list.get(index).getYear())), 
-								InvoiceDateFormat.string2DateReverseSmallDash(WorkingIncomingTable.getEndMonthOfDate(list.get(index).getMonth(), list.get(index).getYear())),
-								WorkingIncomingTable.getCountCompletedInMonthYear(list.get(index).getMonth(), list.get(index).getYear()), 
-								WorkingIncomingTable.getCountUncompletedInMonthYear(list.get(index).getMonth(), list.get(index).getYear()), 
-								WorkingIncomingTable.getCountCancelledInMonthYear(list.get(index).getMonth(), list.get(index).getYear()), 
-								WorkingIncomingTable.getCountUndeterminedInMonthYear(list.get(index).getMonth(), list.get(index).getYear())
+								InvoiceDateFormat.string2DateReverseSmallDash(WorkingIncomingTable.Date.getStartMonthOfDate(list.get(index).getMonth(), list.get(index).getYear())), 
+								InvoiceDateFormat.string2DateReverseSmallDash(WorkingIncomingTable.Date.getEndMonthOfDate(list.get(index).getMonth(), list.get(index).getYear())),
+								WorkingIncomingTable.Count.getCountCompletedInMonthYear(list.get(index).getMonth(), list.get(index).getYear()), 
+								WorkingIncomingTable.Count.getCountUncompletedInMonthYear(list.get(index).getMonth(), list.get(index).getYear()), 
+								WorkingIncomingTable.Count.getCountCancelledInMonthYear(list.get(index).getMonth(), list.get(index).getYear()), 
+								WorkingIncomingTable.Count.getCountUndeterminedInMonthYear(list.get(index).getMonth(), list.get(index).getYear())
 						);
 
 					} catch (ParseException e) {
@@ -504,7 +499,7 @@ public class MainFrame extends JFrame{
 	}
 	
 	private boolean fillYear(){
-		List<String> list = WorkingIncomingTable.selectYearInvoice();
+		List<String> list = WorkingIncomingTable.Date.selectYearInvoice();
 		ComboBoxModel<String> model = new DefaultComboBoxModel<String>();
 		if(list == null){
 			return false;
@@ -517,7 +512,7 @@ public class MainFrame extends JFrame{
 	}
 	
 	private void selectYear(){
-		if(WorkingIncomingTable.getCountAll() > 0){
+		if(WorkingIncomingTable.Count.getCountAll() > 0){
 			yearComboBox.setSelectedIndex(0);
 			updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
 		}
@@ -607,19 +602,20 @@ public class MainFrame extends JFrame{
 							unp = Certificate.getInstance().getUnp2();
 						}
 						try{
+							int limit = 30;//количество столбцов
 							for(int index=0; index<lines.size();index++){
-								String[] fields = lines.get(index).split(";",28);								
+								String[] fields = lines.get(index).split(";",limit);								
 								if(fields[0].trim().equals(unp)){//изменить на чтение сертификата
 								//if(fields[0].trim().equals("400047886")){
 									System.out.println("Запись "+(index+1)+": Попытка чтения записи исходящей ЭСЧФ из файла");
 								}else{
-									switch(WorkingIncomingTable.getCountRecord(fields[10])){
-									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[10]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
-									case  0: if(WorkingIncomingTable.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
-									case  1: if(WorkingIncomingTable.updateStatusFromFile(fields[12], fields[10])){updateCount++;}else{errorCount++;} break;
+									switch(WorkingIncomingTable.Count.getCountRecord(fields[12])){
+									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[12]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
+									case  0: if(WorkingIncomingTable.Insert.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
+									case  1: if(WorkingIncomingTable.Update.updateStatusFromFile(fields[14], fields[12])){updateCount++;}else{errorCount++;} break;
 									default: avialCount++; break;
 									}
-									progress.setProgress(index);		
+									progress.setProgress(index+1);		
 									if(progress.isCancelled()){
 										JOptionPane.showMessageDialog(null, "Загрузка файла отменена","Внимание",JOptionPane.WARNING_MESSAGE);
 										break;

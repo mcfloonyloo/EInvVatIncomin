@@ -18,7 +18,7 @@ public class UpdateEnStatus {
 				SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
 					@Override
 					protected Void doInBackground() throws Exception {
-						List<String> list = WorkingIncomingTable.selectNumbersInvoice();
+						List<String> list = WorkingIncomingTable.Lists.selectNumbersInvoice();
 						if(list != null){
 							int errorCount = 0;
 							int mainCount = 0;
@@ -28,7 +28,7 @@ public class UpdateEnStatus {
 									AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index));
 									boolean isValid = status.verify();
 									if(isValid){
-										if(WorkingIncomingTable.updateStatus(status.getStatus(), list.get(index))){
+										if(WorkingIncomingTable.Update.updateStatus(status.getStatus(), list.get(index))){
 											mainCount++;
 										}else{
 											errorCount++;
@@ -68,7 +68,7 @@ public class UpdateEnStatus {
 				SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
 					@Override
 					protected Void doInBackground() throws Exception {
-						List<String> list = WorkingIncomingTable.selectNotSignedNumbersInvoice();
+						List<String> list = WorkingIncomingTable.Lists.selectNotSignedNumbersInvoice();
 						if(list != null){
 							int errorCount = 0;
 							int mainCount = 0;
@@ -78,7 +78,7 @@ public class UpdateEnStatus {
 									AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index));
 									boolean isValid = status.verify();
 									if(isValid){
-										if(WorkingIncomingTable.updateStatus(status.getStatus(), list.get(index))){
+										if(WorkingIncomingTable.Update.updateStatus(status.getStatus(), list.get(index))){
 											mainCount++;
 										}else{
 											errorCount++;

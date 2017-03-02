@@ -17,6 +17,7 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
+import by.gomelagro.incoming.base.ApplicationConstants;
 import by.gomelagro.incoming.service.certificate.Certificate;
 
 public class ShowCertificateFrame extends JFrame {
@@ -51,7 +52,7 @@ public class ShowCertificateFrame extends JFrame {
 		setBounds(100, 100, 710, 520);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-		setTitle("Информация о сертификате");
+		setTitle(ApplicationConstants.APP_SHOWSERTIFICATEFRAME_TITLE);
 		setContentPane(contentPane);
 		GridBagLayout gbl_contentPane = new GridBagLayout();
 		gbl_contentPane.columnWidths = new int[]{0, 170, 0, 0, 0};

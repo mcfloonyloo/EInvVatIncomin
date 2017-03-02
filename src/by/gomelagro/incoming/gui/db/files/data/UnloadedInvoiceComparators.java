@@ -9,9 +9,15 @@ public class UnloadedInvoiceComparators {
 		}
 	};
 	
-	public static Comparator<UnloadedInvoice> compareToDate = new Comparator<UnloadedInvoice>(){
+	public static Comparator<UnloadedInvoice> compareToDateAsc = new Comparator<UnloadedInvoice>(){
 		public int compare(UnloadedInvoice invoice1, UnloadedInvoice invoice2){
 			return invoice1.getDateCommission().compareTo(invoice2.getDateCommission());
+		}
+	};
+	
+	public static Comparator<UnloadedInvoice> compareToDateDesc = new Comparator<UnloadedInvoice>(){
+		public int compare(UnloadedInvoice invoice1, UnloadedInvoice invoice2){
+			return invoice2.getDateCommission().compareTo(invoice1.getDateCommission());
 		}
 	};
 	

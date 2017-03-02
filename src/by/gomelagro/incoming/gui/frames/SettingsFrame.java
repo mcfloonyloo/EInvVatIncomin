@@ -19,6 +19,7 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import by.gomelagro.incoming.base.ApplicationConstants;
 import by.gomelagro.incoming.properties.ApplicationProperties;
 import by.gomelagro.incoming.properties.ApplicationPropertiesTemp;
 
@@ -56,7 +57,7 @@ public class SettingsFrame extends JFrame {
 	private void initialize(){
 		setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
 		setType(Type.UTILITY);
-		setTitle("Настройки");
+		setTitle(ApplicationConstants.APP_SETTINGSFRAME_TITLE);
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setResizable(false);
 		setBounds(100, 100, 700, 310);

@@ -5,6 +5,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import by.gomelagro.incoming.format.date.InvoiceDateFormat;
+
 public class UnloadedInvoice {
 	private String unp;
 	private Date dateCommission;
@@ -104,7 +106,8 @@ public class UnloadedInvoice {
 	public Date getFormattedDateDocument(){
 		Date date;
 		try {
-			date = new SimpleDateFormat("dd.MM.yyyy").parse(getDateDocument());
+			//date = new SimpleDateFormat("dd.MM.yyyy").parse(getDateDocument());
+			date = InvoiceDateFormat.string2DateSmallDot(getDateDocument());
 		} catch (ParseException e) {
 			date = null;
 		}
