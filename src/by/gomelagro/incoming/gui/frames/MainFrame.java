@@ -398,7 +398,7 @@ public class MainFrame extends JFrame{
 				}
 			}
 		});
-		loadFileMenuItem.setEnabled(false);
+		//loadFileMenuItem.setEnabled(false);
 		listMenu.add(loadFileMenuItem);
 		
 		listMenu.addSeparator();
@@ -591,7 +591,7 @@ public class MainFrame extends JFrame{
 						LoadFileProgressBar progress = new LoadFileProgressBar(lines.size()).activated();
 						//проверка наличия УНП в сертификате
 						String unp = "";
-						if(Certificate.getInstance().getUnp2() == ""){//если unp2 пустой
+						/*if(Certificate.getInstance().getUnp2() == ""){//если unp2 пустой
 							if(Certificate.getInstance().getUnp101() == ""){//если unp101 пустой
 								progress.disactivated();
 								JOptionPane.showMessageDialog(null, "Не обнаружен УНП. Загрузка отменена","Ошибка",JOptionPane.ERROR_MESSAGE);
@@ -600,14 +600,14 @@ public class MainFrame extends JFrame{
 							}
 						}else{
 							unp = Certificate.getInstance().getUnp2();
-						}
+						}*/
 						try{
 							int limit = 30;//количество столбцов
 							for(int index=0; index<lines.size();index++){
-								String[] fields = lines.get(index).split(";",limit);								
-								if(fields[0].trim().equals(unp)){//изменить на чтение сертификата
-								//if(fields[0].trim().equals("400047886")){
-									System.out.println("Запись "+(index+1)+": Попытка чтения записи исходящей ЭСЧФ из файла");
+								String[] fields = lines.get(index).split(";",limit);
+								//if(fields[0].trim().equals(unp)){//изменить на чтение сертификата
+								if(fields[0].trim().equals("400047886")){
+									System.out.println("Запись "+(index++)+": Попытка чтения записи исходящей ЭСЧФ из файла");
 								}else{
 									switch(WorkingIncomingTable.Count.getCountRecord(fields[12])){
 									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[12]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;

@@ -12,16 +12,27 @@ public class WorkingFiles {
 		BufferedReader reader = new BufferedReader(new FileReader(file));
 		List<String> lines = new ArrayList<String>();
 		String line = "";
-		line = reader.readLine()+reader.readLine();
-		if(line.trim() == "INVOICESH;Исходный СХ"){
+		line = reader.readLine();
+		if(line.trim().length()>0){
 			reader.close();
 			return null;
+		}
+		line = reader.readLine();
+		if(line.trim() == "INVOICESH;Исходный СХ"){
+		//if(!line.contains("INVOICESH;Исходный СХ")){
+			reader.close();
+			return null;
+		}
+		line = reader.readLine();
+		if(!line.contains("\"УНП\";Имнс поставщика;")){
+			reader.close();
+			return null;	
 		}		
 		while(reader.ready()){
 			line = reader.readLine();
-			if(!line.trim().isEmpty())
-				if((line.toCharArray()[0] != 'I')&&(line.toCharArray()[0] != '"'))
-					lines.add(line);
+			if(!line.trim().isEmpty()){
+				lines.add(line);
+			}
 		}
 		reader.close();
 		return lines;
