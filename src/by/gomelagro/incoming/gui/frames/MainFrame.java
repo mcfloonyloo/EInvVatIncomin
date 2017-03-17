@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
-
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
@@ -398,7 +397,7 @@ public class MainFrame extends JFrame{
 				}
 			}
 		});
-		//loadFileMenuItem.setEnabled(false);
+		loadFileMenuItem.setEnabled(false);
 		listMenu.add(loadFileMenuItem);
 		
 		listMenu.addSeparator();
@@ -590,6 +589,7 @@ public class MainFrame extends JFrame{
 						int updateCount = 0;;
 						LoadFileProgressBar progress = new LoadFileProgressBar(lines.size()).activated();
 						//проверка наличия УНП в сертификате
+						//String unp = "400047886";
 						String unp = "";
 						if(Certificate.getInstance().getUnp2() == ""){//если unp2 пустой
 							if(Certificate.getInstance().getUnp101() == ""){//если unp101 пустой
@@ -603,16 +603,54 @@ public class MainFrame extends JFrame{
 						}
 						try{
 							int limit = 30;//количество столбцов
+							String dateIssue = "";
+							String dateCommission = "";
+							String dateSignature = "";
+							String dateCancellation = "";
+							String dateDocument = "";
+							
 							for(int index=0; index<lines.size();index++){
 								String[] fields = lines.get(index).split(";",limit);
 								if(fields[0].trim().equals(unp)){//изменить на чтение сертификата
-								//if(fields[0].trim().equals("400047886")){
 									System.out.println("Запись "+(index++)+": Попытка чтения записи исходящей ЭСЧФ из файла");
 								}else{
 									switch(WorkingIncomingTable.Count.getCountRecord(fields[12])){
 									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[12]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
 									case  0: if(WorkingIncomingTable.Insert.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
-									case  1: if(WorkingIncomingTable.Update.updateStatusFromFile(fields[14], fields[12])){updateCount++;}else{errorCount++;} break;
+									case  1: {
+										
+										if(fields[15].trim().length() > 0){
+											dateIssue = InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[15]));
+										}else{
+											dateIssue = fields[15];
+										}
+										
+										if(fields[16].trim().length() > 0){
+											dateCommission = InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[16]));
+										}else{
+											dateCommission = fields[16];
+										}
+										
+										if(fields[17].trim().length() > 0){
+											dateSignature = InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[17]));
+										}else{
+											dateSignature = fields[17];
+										}
+										
+										if(fields[19].trim().length() > 0){
+											dateCancellation = InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[19]));
+										}else{
+											dateCancellation = fields[19];
+										}
+									
+										dateDocument = fields[29];
+										
+										if(WorkingIncomingTable.Update.updateStatusFromFile(fields[14], fields[12])
+											&&(WorkingIncomingTable.Update.updateDateFromFile("DATEISSUE", dateIssue, fields[12])
+											&&(WorkingIncomingTable.Update.updateDateFromFile("DATECOMMISSION", dateCommission, fields[12]))
+											&&(WorkingIncomingTable.Update.updateDateFromFile("DATESIGNATURE", dateSignature, fields[12]))
+											&&(WorkingIncomingTable.Update.updateDateFromFile("DATECANCELLATION", dateCancellation, fields[12]))
+											&&(WorkingIncomingTable.Update.updateDateFromFile("DATEDOCUMENT", dateDocument, fields[12])))){updateCount++;}else{errorCount++;} break;}
 									default: avialCount++; break;
 									}
 									progress.setProgress(index+1);		
@@ -658,4 +696,6 @@ public class MainFrame extends JFrame{
 	private void showInfoCertificate(){
 		new ShowCertificateFrame().open();
 	}
+	
+	
 }

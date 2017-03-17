@@ -543,6 +543,21 @@ public class WorkingIncomingTable {
 			return result;
 		}
 
+		public static boolean updateDateFromFile(String column, String date, String number) throws SQLException{
+			boolean result = false;
+			if(!Table.isContainsColumn(Table.getColumns(), column)){
+				System.err.println("Столбец ["+column+"] отсутствует в базе данных");
+			}else{
+				String sql = "UPDATE "+ApplicationConstants.DB_TABLENAME+" SET "+column+" = ? WHERE NUMBERINVOICE = ?";
+				PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql);
+				statement.setString(1, date.trim());
+				statement.setString(2, number.trim());
+				statement.executeUpdate();
+				result = true;
+			}
+			return result;
+				
+		}
 	}
 	
 	public static class Date{
@@ -630,6 +645,46 @@ public class WorkingIncomingTable {
 				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 				return "31.01.1999";
 			}
+		}
+		
+	}
+	
+	public static class Table{
+		
+		//получение списка столбцов
+		public static List<String> getColumns(){
+			List<String> list = new ArrayList<String>();
+			String sql = "PRAGMA table_info("+ApplicationConstants.DB_TABLENAME+") ";
+			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+				ResultSet set = statement.executeQuery();
+				while(set.next()){list.add(set.getString("name"));}
+			} catch (SQLException e) {
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+			return list;
+		}
+
+		//есть ли столбец в списке столбцов?
+		public static boolean isContainsColumn(List<String> list, String column){
+			boolean result = false;
+			if(list.contains(column)){
+				result = true;
+			}
+			return result;
+		}
+		
+		//добавление столбца в таблицу
+		public static boolean addColumn(String column, String type){
+			String sql = "ALTER TABLE "+ApplicationConstants.DB_TABLENAME+" ADD COLUMN "+column.trim()+" "+type.trim();
+			boolean result = false;
+			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+				statement.executeUpdate();
+				result = true;
+			}catch(SQLException e){
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+				return false;
+			}
+			return result;
 		}
 		
 	}
