@@ -106,7 +106,6 @@ public class UnloadedInvoice {
 	public Date getFormattedDateDocument(){
 		Date date;
 		try {
-			//date = new SimpleDateFormat("dd.MM.yyyy").parse(getDateDocument());
 			date = InvoiceDateFormat.string2DateSmallDot(getDateDocument());
 		} catch (ParseException e) {
 			date = null;

@@ -1,7 +1,7 @@
 package by.gomelagro.incoming.base;
 
 public class ApplicationConstants {
-	public static final String APP_VERSION = "v0.3.6.3";
+	public static final String APP_VERSION = "v0.3.7.0";
 	
 	public static final String APP_MAINFRAME_TITLE = "Приложение для обработки входящих ЭСЧФ";
 	public static final String APP_REPORTONEDAYFRAME_TITLE = "Отчет по ЭСЧФ за один день";
@@ -10,5 +10,7 @@ public class ApplicationConstants {
 	public static final String APP_SHOWSERTIFICATEFRAME_TITLE = "Информация о сертификате";
 	
 	public static final String DB_TABLENAME = "INCOMING";
+	
+	public static final int CSV_COUNTCOLUMNS = 41;
 	
 }

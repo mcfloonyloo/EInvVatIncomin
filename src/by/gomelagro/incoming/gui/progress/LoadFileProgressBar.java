@@ -113,7 +113,7 @@ public class LoadFileProgressBar extends JFrame {
 	
 	public void disactivated(){
 		this.setVisible(false);
-		this.dispose();
+		super.dispose();
 	}
 
 }

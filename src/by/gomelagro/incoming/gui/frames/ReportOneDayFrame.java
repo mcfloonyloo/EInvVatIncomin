@@ -1,9 +1,33 @@
 package by.gomelagro.incoming.gui.frames;
 
+import java.awt.Dialog.ModalExclusionType;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.Date;
+import java.text.ParseException;
+import java.util.List;
+
+import javax.swing.AbstractListModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -14,39 +38,13 @@ import by.gomelagro.incoming.format.date.InvoiceDateFormat;
 import by.gomelagro.incoming.gui.db.WorkingIncomingTable;
 import by.gomelagro.incoming.gui.db.files.data.UnloadedInvoice;
 import by.gomelagro.incoming.gui.db.files.data.UnloadedInvoiceComparators;
-import by.gomelagro.incoming.gui.frames.report.ResultStatusComboBoxItem;
 import by.gomelagro.incoming.gui.frames.report.ResultElementList;
 import by.gomelagro.incoming.gui.frames.report.ResultFont;
 import by.gomelagro.incoming.gui.frames.report.ResultSortComboBoxItem;
+import by.gomelagro.incoming.gui.frames.report.ResultStatusComboBoxItem;
 import by.gomelagro.incoming.gui.frames.report.models.ResultListModel;
 import by.gomelagro.incoming.gui.frames.report.models.renderer.ResultListCellRenderer;
 import by.gomelagro.incoming.properties.ApplicationProperties;
-
-import java.awt.Dialog.ModalExclusionType;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.awt.GridBagLayout;
-import javax.swing.JButton;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
-import javax.swing.ScrollPaneConstants;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.sql.Date;
-
-import javax.swing.JList;
-import java.awt.Font;
-import javax.swing.ListSelectionModel;
-import javax.swing.JMenuBar;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JLabel;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.AbstractListModel;
 
 /**
  * 
@@ -292,50 +290,42 @@ public class ReportOneDayFrame extends JFrame {
 	}
 	
 	private void generated(){
-		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
+		List<UnloadedInvoice> list = null;
 		try {
 			list = WorkingIncomingTable.Report.selectSignedNumbersInvoiceAtDate(
 					Date.valueOf(InvoiceDateFormat.dateReverseSmallDash2String(dateChooser.getDate())),
 					((ResultSortComboBoxItem) sortedComboBox.getSelectedItem()).getComparator(), 
 					((ResultStatusComboBoxItem) statusComboBox.getSelectedItem()).getSql());
+			if(list != null){
+				for(UnloadedInvoice invoice : list){
+					listModel.addElement(invoice.toString(), invoice.toTrimString(), invoice.getColor(), ResultFont.getFont());
+				}
+			}else{
+				JOptionPane.showMessageDialog(null, "Невозможно обработать неинициализированный список","Ошибка",JOptionPane.ERROR_MESSAGE);
+			}		
 		} catch (ParseException e) {
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-		}
-		if(list != null){
-			for(UnloadedInvoice invoice : list){
-				listModel.addElement(invoice.toString(), invoice.toTrimString(), invoice.getColor(), ResultFont.getFont());
+		}finally{
+			if(list != null){
+				list = null;
 			}
-		}else{
-			JOptionPane.showMessageDialog(null, "Невозможно обработать неинициализированный список","Ошибка",JOptionPane.ERROR_MESSAGE);
 		}
 	}
 	
 	private void saveFile(String filePath){
-		FileWriter writer = null;
-		try {
-			writer = new FileWriter(filePath);
+		try (FileWriter writer = new FileWriter(filePath)){			
 			for(int index=0;index<listModel.size();index++){
 				writer.write(listModel.getElementAt(index).getTrimmed()+System.lineSeparator());
 			}
 			writer.flush();
 			JOptionPane.showMessageDialog(null, "Отчет сохранен в файл "+filePath.trim(),"Информация",JOptionPane.INFORMATION_MESSAGE);
 		} catch (IOException e) {
-		JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-		} finally {
-			if(writer != null){
-				try{
-					writer.close();
-				}catch(IOException e){
-					JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-				}
-			}
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 		}
 	}
 	
 	private void saveFileLayout(String filePath){
-		FileWriter writer = null;
-		try {
-			writer = new FileWriter(filePath);
+		try (FileWriter writer = new FileWriter(filePath)){
 			for(int index=0;index<listModel.size();index++){
 				writer.write(listModel.getElementAt(index).getFormatted()+System.lineSeparator());
 			}
@@ -343,14 +333,6 @@ public class ReportOneDayFrame extends JFrame {
 			JOptionPane.showMessageDialog(null, "Отчет сохранен в файл "+filePath.trim(),"Информация",JOptionPane.INFORMATION_MESSAGE);
 		} catch (IOException e) {
 		JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-		} finally {
-			if(writer != null){
-				try{
-					writer.close();
-				}catch(IOException e){
-					JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-				}
-			}
 		}
 	}
 	
@@ -358,4 +340,28 @@ public class ReportOneDayFrame extends JFrame {
 		this.setVisible(true);
 		return this;
 	}
+	
+	private void menuDispose(){
+		menuBar = null;
+		fileMenu = null;
+		saveMenuItem = null;
+		saveAsMenuItem = null;
+		saveAsLayoutMenuItem = null;
+	}
+	
+	private void comboBoxDispose(){
+		statusComboBox = null;
+		sortedComboBox = null;
+	}
+	
+	@Override
+	public void dispose(){
+		contentPane = null;
+		listModel = null;
+		titleList = null;
+		menuDispose();
+		comboBoxDispose();
+		super.dispose();
+	}
+	
 }

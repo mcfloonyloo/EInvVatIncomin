@@ -239,7 +239,7 @@ public class WorkingIncomingTable {
 	public static class Insert{
 		
 		//добавление ЭСЧФ
-		public static boolean insertIncoming(String[] fields) throws SQLException, ParseException{
+		/*public static boolean insertIncoming(String[] fields) throws SQLException, ParseException{
 			String sql = "INSERT INTO "+ApplicationConstants.DB_TABLENAME+"("
 					+ "UNP, " 				// 01 00
 					+ "CODECOUNTRY, " 		// 02 02
@@ -316,6 +316,73 @@ public class WorkingIncomingTable {
 					statement.setString(17,  fields[29]);
 				}else{
 					statement.setString(17,  fields[29]);
+				}
+				statement.executeUpdate();
+				System.out.println("add");
+				result = true;
+				return result;		
+		}
+		
+	}*/
+		
+		public static boolean insertIncoming(String[] fields) throws SQLException, ParseException{
+			String sql = "INSERT INTO "+ApplicationConstants.DB_TABLENAME+"("
+					+ "UNP, " 				// 01 00	01
+					+ "CODECOUNTRY, " 		// 02 02	00
+					+ "NAME, " 				// 03 03	03
+					+ "NUMBERINVOICE, " 	// 04 12	13
+					+ "TYPEINVOICE, " 		// 05 13	15
+					+ "STATUSINVOICERU, " 	// 06 14	16
+					+ "STATUSINVOICEEN, " 	// 07 
+					+ "DATEISSUE, " 		// 08 15	17
+					+ "DATECOMMISSION, " 	// 09 16	18
+					+ "DATESIGNATURE, " 	// 10 17	19
+					+ "BYINVOICE, " 		// 11 18	14
+					+ "DATECANCELLATION, " 	// 12 19	20
+					+ "TOTALEXCISE, " 		// 13 20	38
+					+ "TOTALVAT, " 			// 14 21	39
+					+ "TOTALALL, " 			// 15 22	40
+					+ "TOTALCOST, " 		// 16 		37
+					+ "DATEDOCUMENT)" 		// 17 29	36
+					+ " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+			boolean result = false;
+				PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql);
+				statement.setString(1,  fields[1]);
+				statement.setString(2,  fields[0]);
+				statement.setString(3,  fields[3]);
+				statement.setString(4,  fields[13]);
+				statement.setString(5,  fields[15]);
+				statement.setString(6,  fields[16]);
+				statement.setString(7, Status.valueRuOf(fields[16]));
+				if(fields[17].trim().length() > 0){
+					statement.setString(8,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[17])));
+				}else{
+					statement.setString(8,  fields[15]);
+				}
+				if(fields[18].trim().length() > 0){
+					statement.setString(9,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[18])));
+				}else{
+					statement.setString(9,  fields[18]);
+				}
+				if(fields[19].trim().length() > 0){
+					statement.setString(10,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[19])));
+				}else{
+					statement.setString(10,  fields[19]);
+				}
+				statement.setString(11, fields[14]);
+				if(fields[20].trim().length() > 0){
+					statement.setString(12,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[20])));
+				}else{
+					statement.setString(12,  fields[20]);
+				}
+				statement.setString(13, fields[38].replace(",", "."));
+				statement.setString(14, fields[39].replace(",", "."));
+				statement.setString(15, fields[40].replace(",", "."));
+				statement.setString(16, fields[37].replace(",", "."));
+				if(fields[36].trim().length() > 0){
+					statement.setString(17,  fields[36]);
+				}else{
+					statement.setString(17,  fields[36]);
 				}
 				statement.executeUpdate();
 				System.out.println("add");

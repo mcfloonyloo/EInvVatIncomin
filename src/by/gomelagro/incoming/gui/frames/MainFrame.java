@@ -86,7 +86,6 @@ public class MainFrame extends JFrame{
 	 * Create the application.
 	 */
 	public MainFrame() {
-		//initialize();
 		if(WorkingFiles.isFile(ApplicationProperties.getInstance().getDbPath())){
 			initialize();
 			if(WorkingIncomingTable.Count.getCountAll() > 0)
@@ -389,7 +388,7 @@ public class MainFrame extends JFrame{
 		
 		loadFileMenuItem = new JMenuItem("Загрузить из файла...");
 		loadFileMenuItem.addMouseListener(new MouseAdapter() {
-			@Override
+			@Override	
 			public void mousePressed(MouseEvent evt) {
 				if(loadFileMenuItem.isEnabled()){
 					loadFile();
@@ -569,8 +568,12 @@ public class MainFrame extends JFrame{
 		}
 	}
 	
-	private void loadFile(){
+	/*private void loadFile(){
 		JFileChooser chooser = new JFileChooser();
+		chooser.setMultiSelectionEnabled(false);
+		chooser.addChoosableFileFilter(new FileNameExtensionFilter("CSV files (.csv)", "csv"));
+		chooser.setAcceptAllFileFilterUsed(false);
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		int res = chooser.showDialog(null, "Открыть");
 		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
 			@Override
@@ -651,6 +654,121 @@ public class MainFrame extends JFrame{
 											&&(WorkingIncomingTable.Update.updateDateFromFile("DATESIGNATURE", dateSignature, fields[12]))
 											&&(WorkingIncomingTable.Update.updateDateFromFile("DATECANCELLATION", dateCancellation, fields[12]))
 											&&(WorkingIncomingTable.Update.updateDateFromFile("DATEDOCUMENT", dateDocument, fields[12])))){updateCount++;}else{errorCount++;} break;}
+									default: avialCount++; break;
+									}
+									progress.setProgress(index+1);		
+									if(progress.isCancelled()){
+										JOptionPane.showMessageDialog(null, "Загрузка файла отменена","Внимание",JOptionPane.WARNING_MESSAGE);
+										break;
+									}
+								}
+							}
+						} catch (SQLException | ParseException e) {
+							JOptionPane.showMessageDialog(null, e.getLocalizedMessage()+System.lineSeparator()+"Загрузка файла прервана","Ошибка",JOptionPane.ERROR_MESSAGE);
+							progress.disactivated();
+						}
+						JOptionPane.showMessageDialog(null, "Добавлено "+notavialCount+" ЭСЧФ"+System.lineSeparator()+
+								"Не добавлено из-за их дублирования "+avialCount+" ЭСЧФ"+System.lineSeparator()+
+								"Обновлены статусы из файла у " + updateCount + " ЭСЧФ"+System.lineSeparator()+
+								"Не добавлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);
+						progress.disactivated();
+					}else{
+						JOptionPane.showMessageDialog(null, "Загружен файл неверной структуры"+System.lineSeparator()+
+								"Выберите другой файл","Ошибка",JOptionPane.ERROR_MESSAGE);
+					}
+				}
+				return null;		
+			}			
+		};	
+		worker.execute();
+	}*/
+	
+	private void loadFile(){
+		JFileChooser chooser = new JFileChooser();
+		chooser.setMultiSelectionEnabled(false);
+		chooser.addChoosableFileFilter(new FileNameExtensionFilter("CSV files (.csv)", "csv"));
+		chooser.setAcceptAllFileFilterUsed(false);
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		int res = chooser.showDialog(null, "Открыть");
+		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
+			@Override
+			protected Void doInBackground() throws Exception {
+				List<String> lines = null;
+				if(res == JFileChooser.APPROVE_OPTION){
+					try {
+						lines = WorkingFiles.readCSVFile(chooser.getSelectedFile());
+					} catch (IOException e) {
+						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+					}
+					if(lines != null){
+						int avialCount = 0;
+						int errorCount = 0;
+						int notavialCount = 0;
+						int updateCount = 0;;
+						LoadFileProgressBar progress = new LoadFileProgressBar(lines.size()).activated();
+						//проверка наличия УНП в сертификате
+						//String unp = "400047886";
+						String unp = "";
+						if(Certificate.getInstance().getUnp2() == ""){//если unp2 пустой
+							if(Certificate.getInstance().getUnp101() == ""){//если unp101 пустой
+								progress.disactivated();
+								JOptionPane.showMessageDialog(null, "Не обнаружен УНП. Загрузка отменена","Ошибка",JOptionPane.ERROR_MESSAGE);
+							}else{
+								unp = Certificate.getInstance().getUnp101();
+							}
+						}else{
+							unp = Certificate.getInstance().getUnp2();
+						}
+						try{
+							int limit = ApplicationConstants.CSV_COUNTCOLUMNS;//количество столбцов
+							String dateIssue = "";
+							String dateCommission = "";
+							String dateSignature = "";
+							String dateCancellation = "";
+							String dateDocument = "";
+							
+							for(int index=0; index<lines.size();index++){
+								String[] fields = lines.get(index).split(";",limit);
+								if(fields[1].trim().equals(unp)){//изменить на чтение сертификата
+									System.out.println("Запись "+(index++)+": Попытка чтения записи исходящей ЭСЧФ из файла");
+								}else{
+									switch(WorkingIncomingTable.Count.getCountRecord(fields[13])){
+									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[13]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
+									case  0: if(WorkingIncomingTable.Insert.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
+									case  1: {
+										
+										if(fields[17].trim().length() > 0){
+											dateIssue = InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[17]));
+										}else{
+											dateIssue = fields[17];
+										}
+										
+										if(fields[18].trim().length() > 0){
+											dateCommission = InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[18]));
+										}else{
+											dateCommission = fields[18];
+										}
+										
+										if(fields[19].trim().length() > 0){
+											dateSignature = InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[19]));
+										}else{
+											dateSignature = fields[19];
+										}
+										
+										if(fields[20].trim().length() > 0){
+											dateCancellation = InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[20]));
+										}else{
+											dateCancellation = fields[20];
+										}
+									
+										dateDocument = fields[36];
+										
+										if(WorkingIncomingTable.Update.updateStatusFromFile(fields[16], fields[13])
+											&&(WorkingIncomingTable.Update.updateDateFromFile("DATEISSUE", dateIssue, fields[13])
+											&&(WorkingIncomingTable.Update.updateDateFromFile("DATECOMMISSION", dateCommission, fields[13]))
+											&&(WorkingIncomingTable.Update.updateDateFromFile("DATESIGNATURE", dateSignature, fields[13]))
+											&&(WorkingIncomingTable.Update.updateDateFromFile("DATECANCELLATION", dateCancellation, fields[13]))
+											&&(WorkingIncomingTable.Update.updateDateFromFile("DATEDOCUMENT", dateDocument, fields[13])))){updateCount++;}else{errorCount++;} break;}
 									default: avialCount++; break;
 									}
 									progress.setProgress(index+1);		

@@ -118,5 +118,4 @@ public class JMonthPanel extends JPanel {
 		gbc_undeterminedLabel.gridy = 2;
 		add(undeterminedLabel, gbc_undeterminedLabel);
 	}
-
 }

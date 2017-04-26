@@ -407,7 +407,10 @@ public class ShowCertificateFrame extends JFrame {
 		return this;
 	}
 	
-	public void close(){
-		dispose();
+	@Override
+	public void dispose(){
+		contentPane.removeAll();
+		contentPane = null;
+		super.dispose();
 	}
 }

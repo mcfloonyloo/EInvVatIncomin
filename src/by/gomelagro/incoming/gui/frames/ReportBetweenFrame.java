@@ -1,17 +1,16 @@
 package by.gomelagro.incoming.gui.frames;
 
+import java.awt.Dialog.ModalExclusionType;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Dialog.ModalExclusionType;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Date;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.AbstractListModel;
@@ -308,76 +307,79 @@ public class ReportBetweenFrame extends JFrame {
 	}
 	
 	private void generated(){
-		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
+		List<UnloadedInvoice> list = null;
 		try {
 			list = WorkingIncomingTable.Report.selectSignedNumbersInvoiceAtBetween(
 					Date.valueOf(InvoiceDateFormat.dateReverseSmallDash2String(fromDateChooser.getDate())),
 					Date.valueOf(InvoiceDateFormat.dateReverseSmallDash2String(toDateChooser.getDate())),
 					((ResultSortComboBoxItem) sortedComboBox.getSelectedItem()).getComparator(), 
 					((ResultStatusComboBoxItem) statusComboBox.getSelectedItem()).getSql());
+			if(list != null){
+				for(UnloadedInvoice invoice : list){
+					listModel.addElement(invoice.toString(), invoice.toTrimString(), invoice.getColor(), ResultFont.getFont());
+				}
+			}else{
+				JOptionPane.showMessageDialog(null, "Невозможно обработать неинициализированный список","Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
 		} catch (ParseException e) {
 			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-		}
-		if(list != null){
-			for(UnloadedInvoice invoice : list){
-				listModel.addElement(invoice.toString(), invoice.toTrimString(), invoice.getColor(), ResultFont.getFont());
+		}finally{
+			if(list != null){
+				list = null;
 			}
-		}else{
-			JOptionPane.showMessageDialog(null, "Невозможно обработать неинициализированный список","Ошибка",JOptionPane.ERROR_MESSAGE);
-		}
+		}		
 	}
 	
 	private void saveFile(String filePath){
-		FileWriter writer = null;
-		try {
-			writer = new FileWriter(filePath);
+		try (FileWriter writer = new FileWriter(filePath)){
 			for(int index=0;index<listModel.size();index++){
 				writer.write(listModel.getElementAt(index).getTrimmed()+System.lineSeparator());
 			}
 			writer.flush();
 			JOptionPane.showMessageDialog(null, "Отчет сохранен в файл "+filePath.trim(),"Информация",JOptionPane.INFORMATION_MESSAGE);
 		} catch (IOException e) {
-		JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-		} finally {
-			if(writer != null){
-				try{
-					writer.close();
-				}catch(IOException e){
-					JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-				}
-			}
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 		}
 	}
 	
 	private void saveFileLayout(String filePath){
-		FileWriter writer = null;
-		try {
-			writer = new FileWriter(filePath);
+		try (FileWriter writer = new FileWriter(filePath)){
 			for(int index=0;index<listModel.size();index++){
 				writer.write(listModel.getElementAt(index).getFormatted()+System.lineSeparator());
 			}
 			writer.flush();
 			JOptionPane.showMessageDialog(null, "Отчет сохранен в файл "+filePath.trim(),"Информация",JOptionPane.INFORMATION_MESSAGE);
 		} catch (IOException e) {
-		JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-		} finally {
-			if(writer != null){
-				try{
-					writer.close();
-				}catch(IOException e){
-					JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
-				}
-			}
+			JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 		}
 	}
-	
-	/*private void disposeFrame(){
-		this.dispose();
-	}*/
 	
 	public ReportBetweenFrame open(){
 		this.setVisible(true);
 		return this;
+	}
+	
+	private void menuDispose(){
+		menuBar = null;
+		fileMenu = null;
+		saveMenuItem = null;
+		saveAsMenuItem = null;
+		saveAsLayoutMenuItem = null;
+	}
+	
+	private void comboBoxDispose(){
+		statusComboBox = null;
+		sortedComboBox = null;
+	}
+	
+	@Override
+	public void dispose(){
+		contentPane = null;
+		listModel = null;
+		titleList = null;
+		menuDispose();
+		comboBoxDispose();
+		super.dispose();
 	}
 
 }

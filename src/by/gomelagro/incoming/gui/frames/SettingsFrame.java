@@ -260,7 +260,7 @@ public class SettingsFrame extends JFrame {
 		cancelButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent evt) {		
-				disposeFrame();
+				dispose();
 			}
 		});
 		GridBagConstraints gbc_cancelButton = new GridBagConstraints();
@@ -282,32 +282,44 @@ public class SettingsFrame extends JFrame {
 	}
 	
 	private void requestClose(){
-		ApplicationPropertiesTemp temp = ApplicationPropertiesTemp.Builder.getInstance().setLibraryPath(libraryPathTextField.getText())
-				.setClassPath(classPathTextField.getText())
-				.setFilePath(filePathTextField.getText())
-				.setDbPath(dbPathTextField.getText())						
-				.setUrlService(urlServiceTextField.getText())
-				.build();
-		
-		if(!ApplicationProperties.getInstance().equals(temp)){
-			int res = JOptionPane.showConfirmDialog(null, "Сохранить изменения настроек?","Запрос на изменение", JOptionPane.YES_NO_OPTION);
-			if(res == JOptionPane.YES_OPTION){
-				ApplicationProperties.getInstance().setLibraryPath(temp.getLibraryPath());
-				ApplicationProperties.getInstance().setClassPath(temp.getClassPath());
-				ApplicationProperties.getInstance().setFilePath(temp.getFilePath());
-				ApplicationProperties.getInstance().setDbPath(temp.getDbPath());
-				ApplicationProperties.getInstance().setUrlService(temp.getUrlService());
-				ApplicationProperties.getInstance().saveProperties();
-				disposeFrame();
-			}
+		ApplicationPropertiesTemp temp = null;
+		try{
+			temp = ApplicationPropertiesTemp.Builder.getInstance().setLibraryPath(libraryPathTextField.getText())
+					.setClassPath(classPathTextField.getText())
+					.setFilePath(filePathTextField.getText())
+					.setDbPath(dbPathTextField.getText())						
+					.setUrlService(urlServiceTextField.getText())
+					.build();
 			
-		}else{
-			disposeFrame();
+			if(!ApplicationProperties.getInstance().equals(temp)){
+				int res = JOptionPane.showConfirmDialog(null, "Сохранить изменения настроек?","Запрос на изменение", JOptionPane.YES_NO_OPTION);
+				if(res == JOptionPane.YES_OPTION){
+					saveProperties(temp);
+					dispose();
+				}
+				
+			}else{
+				dispose();
+			}
+		}finally{
+			temp = null;
 		}
 	}
 	
-	private void disposeFrame(){
-		this.dispose();
+	private void saveProperties(ApplicationPropertiesTemp temp){
+		ApplicationProperties.getInstance().setLibraryPath(temp.getLibraryPath());
+		ApplicationProperties.getInstance().setClassPath(temp.getClassPath());
+		ApplicationProperties.getInstance().setFilePath(temp.getFilePath());
+		ApplicationProperties.getInstance().setDbPath(temp.getDbPath());
+		ApplicationProperties.getInstance().setUrlService(temp.getUrlService());
+		ApplicationProperties.getInstance().saveProperties();
+	}
+	
+	@Override
+	public void dispose(){
+		contentPane.removeAll();
+		contentPane = null;
+		super.dispose();
 	}
 
 	public SettingsFrame open(){
